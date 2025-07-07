@@ -85,7 +85,7 @@ export function WebsiteUrlStep() {
       <div className="flex justify-end pt-6">
         <Button
           type="submit"
-          disabled={!websiteUrl || isPending}
+          disabled={isPending}
           className="px-8 py-2"
           form="websiteUrlForm"
         >
