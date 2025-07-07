@@ -30,7 +30,7 @@ export function WebsiteUrlStep() {
     const formData = new FormData(e.currentTarget);
     const formWebsiteUrl = formData.get("websiteUrl") as string;
 
-    if (formWebsiteUrl !== websiteUrl || !websiteUrl) {
+    if (!websiteUrl || formWebsiteUrl !== websiteUrl) {
       completeCompany(formWebsiteUrl, {
         onSuccess: (data) => {
           // Set the form data with AI completion results
