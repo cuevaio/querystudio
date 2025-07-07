@@ -1,5 +1,5 @@
 export const runtime = "edge";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
