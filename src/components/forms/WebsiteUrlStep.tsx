@@ -40,14 +40,15 @@ export function WebsiteUrlStep() {
           setLanguage(data.language);
           setDescription(data.description);
           setWebsiteUrl(formWebsiteUrl);
+          setCurrentStep(2);
         },
         onError: (error) => {
           toast.error(error.message);
         },
       });
+    } else {
+      setCurrentStep(2);
     }
-
-    setCurrentStep(2);
   };
 
   return (
