@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +40,9 @@ export function WebsiteUrlStep() {
           setLanguage(data.language);
           setDescription(data.description);
           setWebsiteUrl(formWebsiteUrl);
+        },
+        onError: (error) => {
+          toast.error(error.message);
         },
       });
     }

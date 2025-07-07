@@ -1,6 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +51,9 @@ export function CompanyDetailsStep() {
         if (data.country) setCountry(data.country);
         if (data.language) setLanguage(data.language);
         if (data.description) setDescription(data.description);
+      },
+      onError: (error) => {
+        toast.error(error.message);
       },
     });
   };
