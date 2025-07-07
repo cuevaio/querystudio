@@ -6,7 +6,17 @@
     "useIgnoreFile": false
   },
   "files": {
-    "ignoreUnknown": false
+    "ignoreUnknown": false,
+    "includes": [
+      "src/**/*.ts",
+      "src/**/*.tsx",
+      "src/**/*.js",
+      "src/**/*.jsx",
+      "biome.json",
+      "next.config.ts",
+      "drizzle.config.ts",
+      "package.json"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -16,7 +26,13 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "nursery": {
+        "useSortedClasses": "warn"
+      },
+      "correctness": {
+        "noUnusedImports": "warn"
+      }
     }
   },
   "javascript": {
