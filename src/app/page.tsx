@@ -1,103 +1,95 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { CompanyDetailsStep, WebsiteUrlStep } from "@/components/forms";
+import {
+  useBusinessSector,
+  useCompanyName,
+  useCountry,
+  useCurrentStep,
+  useDescription,
+  useLanguage,
+  useWebsiteUrl,
+} from "@/hooks/state";
+
+export default function CompanyProfileForm() {
+  const [currentStep] = useCurrentStep();
+  const [websiteUrl] = useWebsiteUrl();
+  const [companyName] = useCompanyName();
+  const [businessSector] = useBusinessSector();
+  const [country] = useCountry();
+  const [language] = useLanguage();
+  const [description] = useDescription();
+
   return (
-    <div className="grid min-h-screen grid-rows-[20px_1fr_20px] items-center justify-items-center gap-16 p-8 pb-20 font-[family-name:var(--font-geist-sans)] sm:p-20">
-      <main className="row-start-2 flex flex-col items-center gap-[32px] sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-center font-[family-name:var(--font-geist-mono)] text-sm/6 sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="rounded bg-black/[.05] px-1 py-0.5 font-[family-name:var(--font-geist-mono)] font-semibold dark:bg-white/[.06]">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-2xl">
+        <div className="overflow-hidden rounded-lg bg-card shadow-xl">
+          {/* Header */}
+          <div className="border-border border-b bg-card px-6 py-8">
+            <h1 className="text-center font-bold text-3xl text-foreground">
+              Create Company Profile
+            </h1>
+            <p className="mt-2 text-center text-muted-foreground">
+              Step {currentStep} of 2
+            </p>
+          </div>
 
-        <div className="flex flex-col items-center gap-4 sm:flex-row">
-          <a
-            className="flex h-10 items-center justify-center gap-2 rounded-full border border-transparent border-solid bg-foreground px-4 font-medium text-background text-sm transition-colors hover:bg-[#383838] sm:h-12 sm:w-auto sm:px-5 sm:text-base dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="flex h-10 w-full items-center justify-center rounded-full border border-black/[.08] border-solid px-4 font-medium text-sm transition-colors hover:border-transparent hover:bg-[#f2f2f2] sm:h-12 sm:w-auto sm:px-5 sm:text-base md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          {/* Progress Bar */}
+          <div className="border-border border-b bg-muted px-6 py-4">
+            <div className="flex items-center">
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full font-medium text-sm ${
+                  currentStep >= 1
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted-foreground/20 text-muted-foreground"
+                }`}
+              >
+                1
+              </div>
+              <div
+                className={`mx-4 h-1 flex-1 ${
+                  currentStep >= 2 ? "bg-primary" : "bg-muted-foreground/20"
+                }`}
+              ></div>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full font-medium text-sm ${
+                  currentStep >= 2
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted-foreground/20 text-muted-foreground"
+                }`}
+              >
+                2
+              </div>
+            </div>
+          </div>
+
+          {/* Form Content */}
+          <div className="px-6 py-8">
+            {currentStep === 1 ? <WebsiteUrlStep /> : <CompanyDetailsStep />}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex flex-wrap items-center justify-center gap-[24px]">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Debug Info */}
+        <div className="mt-8 rounded-lg bg-muted p-4">
+          <h3 className="mb-2 font-medium text-foreground text-sm">
+            URL State Debug:
+          </h3>
+          <pre className="overflow-auto text-muted-foreground text-xs">
+            {JSON.stringify(
+              {
+                websiteUrl,
+                companyName,
+                businessSector,
+                country,
+                language,
+                description,
+              },
+              null,
+              2,
+            )}
+          </pre>
+        </div>
+      </div>
     </div>
   );
 }
