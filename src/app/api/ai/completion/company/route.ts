@@ -55,7 +55,14 @@ export async function POST(request: Request) {
     }
     const url = urlParsing.data;
 
-    const crawl = await firecrawl.scrapeUrl(url);
+    const crawl = await firecrawl.scrapeUrl(url, {
+      formats: ["markdown"],
+      onlyMainContent: true,
+      waitFor: 1000,
+      proxy: "stealth",
+      parsePDF: false,
+      maxAge: 14400000,
+    });
 
     let content: string | undefined;
     if (crawl.success) {
@@ -94,6 +101,7 @@ export async function POST(request: Request) {
           If the business sector is not in the list, return null.
           If the country is not in the list, return null.
           If the language is not in the list, return null.
+          For the description, talk about what the company does, who it serves, and what it's mission is. Products and services it specializes in. And who are their clients.
           `,
         },
         {
