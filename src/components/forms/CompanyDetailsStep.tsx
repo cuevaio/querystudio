@@ -1,7 +1,7 @@
 "use client";
 
 import { experimental_useObject as useObject } from "@ai-sdk/react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, WandSparklesIcon } from "lucide-react";
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +25,14 @@ import {
   useWebsiteUrl,
 } from "@/hooks/state";
 import { BUSINESS_SECTORS } from "@/lib/constants/business-sectors";
+import { cn } from "@/lib/utils";
 import { CompanySchema } from "@/schemas/company";
 
-export function CompanyDetailsStep() {
+export function CompanyDetailsStep({
+  isLoadingInitial,
+}: {
+  isLoadingInitial: boolean;
+}) {
   const [websiteUrl] = useWebsiteUrl();
 
   const [, setCurrentStep] = useCurrentStep();
@@ -38,10 +43,16 @@ export function CompanyDetailsStep() {
   const [language, setLanguage] = useLanguage();
   const [description, setDescription] = useDescription();
 
-  const { submit, object, isLoading } = useObject({
+  const {
+    submit,
+    object,
+    isLoading: isLoadingRegenerate,
+  } = useObject({
     api: "/api/ai/completion/company",
     schema: CompanySchema,
   });
+
+  const isLoading = isLoadingInitial || isLoadingRegenerate;
 
   React.useEffect(() => {
     if (object) {
@@ -113,6 +124,14 @@ export function CompanyDetailsStep() {
         <div>
           <Label htmlFor="name" className="font-medium text-foreground text-sm">
             Company Name
+            <WandSparklesIcon
+              className={cn(
+                "size-4 text-muted-foreground/0 transition-all duration-300",
+                {
+                  "animate-pulse text-muted-foreground": isLoading && !name,
+                },
+              )}
+            />
           </Label>
           <Input
             id="name"
@@ -128,7 +147,15 @@ export function CompanyDetailsStep() {
             htmlFor="sector"
             className="font-medium text-foreground text-sm"
           >
-            Business Sector
+            Sector
+            <WandSparklesIcon
+              className={cn(
+                "size-4 text-muted-foreground/0 transition-all duration-300",
+                {
+                  "animate-pulse text-muted-foreground": isLoading && !sector,
+                },
+              )}
+            />
           </Label>
           <Select value={sector || ""} onValueChange={setSector}>
             <SelectTrigger className="mt-1">
@@ -150,6 +177,14 @@ export function CompanyDetailsStep() {
             className="font-medium text-foreground text-sm"
           >
             Country / Region
+            <WandSparklesIcon
+              className={cn(
+                "size-4 text-muted-foreground/0 transition-all duration-300",
+                {
+                  "animate-pulse text-muted-foreground": isLoading && !country,
+                },
+              )}
+            />
           </Label>
           <Input
             id="country"
@@ -166,6 +201,14 @@ export function CompanyDetailsStep() {
             className="font-medium text-foreground text-sm"
           >
             Language
+            <WandSparklesIcon
+              className={cn(
+                "size-4 text-muted-foreground/0 transition-all duration-300",
+                {
+                  "animate-pulse text-muted-foreground": isLoading && !language,
+                },
+              )}
+            />
           </Label>
           <Input
             id="language"
@@ -183,6 +226,15 @@ export function CompanyDetailsStep() {
           className="font-medium text-foreground text-sm"
         >
           Company Description / About
+          <WandSparklesIcon
+            className={cn(
+              "size-4 text-muted-foreground/0 transition-all duration-300",
+              {
+                "animate-pulse text-muted-foreground":
+                  isLoading && !description,
+              },
+            )}
+          />
         </Label>
         <Textarea
           id="description"

@@ -6,7 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCompanyCompletion } from "@/hooks/ai/completion/useCompanyCompletion";
-import { useCurrentStep, useWebsiteUrl } from "@/hooks/state";
+import {
+  useCountry,
+  useCurrentStep,
+  useDescription,
+  useLanguage,
+  useName,
+  useSector,
+  useWebsiteUrl,
+} from "@/hooks/state";
 
 export function WebsiteUrlStep({
   generate,
@@ -14,6 +22,11 @@ export function WebsiteUrlStep({
   generate: ({ websiteUrl }: { websiteUrl: string }) => void;
 }) {
   const [websiteUrl, setWebsiteUrl] = useWebsiteUrl();
+  const [, setName] = useName();
+  const [, setSector] = useSector();
+  const [, setCountry] = useCountry();
+  const [, setLanguage] = useLanguage();
+  const [, setDescription] = useDescription();
   const [, setCurrentStep] = useCurrentStep();
   const { isPending } = useCompanyCompletion();
 
@@ -26,6 +39,11 @@ export function WebsiteUrlStep({
     setWebsiteUrl(formWebsiteUrl);
 
     if (!websiteUrl || formWebsiteUrl !== websiteUrl) {
+      setName(null);
+      setSector(null);
+      setCountry(null);
+      setLanguage(null);
+      setDescription(null);
       generate({ websiteUrl: formWebsiteUrl });
     }
 

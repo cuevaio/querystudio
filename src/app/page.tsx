@@ -21,7 +21,11 @@ export default function CompanyProfileForm() {
   const [, setLanguage] = useLanguage();
   const [, setDescription] = useDescription();
 
-  const { object, submit } = useObject({
+  const {
+    object,
+    submit,
+    isLoading: isLoadingInitial,
+  } = useObject({
     api: "/api/ai/completion/company",
     schema: CompanySchema,
   });
@@ -98,7 +102,7 @@ export default function CompanyProfileForm() {
                 }}
               />
             ) : (
-              <CompanyDetailsStep />
+              <CompanyDetailsStep isLoadingInitial={isLoadingInitial} />
             )}
           </div>
         </div>
