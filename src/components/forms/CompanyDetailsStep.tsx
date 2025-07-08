@@ -68,7 +68,6 @@ export function CompanyDetailsStep() {
       return;
     }
 
-    console.log("Regenerating company details...");
     setName(null);
     setSector(null);
     setCountry(null);
@@ -82,14 +81,7 @@ export function CompanyDetailsStep() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({
-      name,
-      sector,
-      country,
-      language,
-      description,
-      websiteUrl,
-    });
+    console.log("Submitting company details...");
   };
 
   return (
