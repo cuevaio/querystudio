@@ -34,8 +34,8 @@ export function WebsiteUrlStep() {
       completeCompany(formWebsiteUrl, {
         onSuccess: (data) => {
           // Set the form data with AI completion results
-          setCompanyName(data.companyName);
-          setBusinessSector(data.businessSector);
+          setCompanyName(data.name);
+          setBusinessSector(data.sector);
           setCountry(data.country);
           setLanguage(data.language);
           setDescription(data.description);

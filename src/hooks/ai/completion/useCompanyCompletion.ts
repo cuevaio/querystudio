@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
-import type { CompanyCompletion } from "@/app/api/ai/completion/company/route";
+import type { z } from "zod";
+import type { CompanySchema } from "@/schemas/company";
 
 export const useCompanyCompletion = () => {
   return useMutation({
@@ -13,7 +14,9 @@ export const useCompanyCompletion = () => {
         throw new Error("Failed to complete company");
       }
 
-      const data = (await response.json()).data as CompanyCompletion;
+      const data = (await response.json()).data as z.infer<
+        typeof CompanySchema
+      >;
       return data;
     },
   });

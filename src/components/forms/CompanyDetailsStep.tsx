@@ -46,8 +46,8 @@ export function CompanyDetailsStep() {
 
     completeCompany(websiteUrl, {
       onSuccess: (data) => {
-        if (data.companyName) setCompanyName(data.companyName);
-        if (data.businessSector) setBusinessSector(data.businessSector);
+        if (data.name) setCompanyName(data.name);
+        if (data.sector) setBusinessSector(data.sector);
         if (data.country) setCountry(data.country);
         if (data.language) setLanguage(data.language);
         if (data.description) setDescription(data.description);

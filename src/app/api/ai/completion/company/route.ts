@@ -2,31 +2,9 @@ export const runtime = "edge";
 export const maxDuration = 60;
 
 import { openai } from "@ai-sdk/openai";
-import { generateObject } from "ai";
+import { Output, streamText } from "ai";
 import { z } from "zod";
-import { BUSINESS_SECTORS } from "@/lib/constants/business-sectors";
-import { COUNTRIES } from "@/lib/constants/countries";
-import { LANGUAGES } from "@/lib/constants/languages";
-import { firecrawl } from "@/lib/firecrawl";
-
-const CompanyCompletionSchema = z.object({
-  companyName: z.string().nullable().describe("The name of the company"),
-  businessSector: z
-    .string()
-    .nullable()
-    .describe("The business sector of the company. Return the code."),
-  country: z
-    .string()
-    .nullable()
-    .describe("The country of the company. Return the code."),
-  description: z.string().nullable().describe("The description of the company"),
-  language: z
-    .string()
-    .nullable()
-    .describe("The language of the company. Return the code."),
-});
-
-export type CompanyCompletion = z.infer<typeof CompanyCompletionSchema>;
+import { CompanySchema } from "@/schemas/company";
 
 export async function POST(request: Request) {
   try {
@@ -55,67 +33,74 @@ export async function POST(request: Request) {
     }
     const url = urlParsing.data;
 
-    const crawl = await firecrawl.scrapeUrl(url, {
-      formats: ["markdown"],
-      onlyMainContent: true,
-      waitFor: 1000,
-      proxy: "stealth",
-      parsePDF: false,
-      maxAge: 14400000,
-    });
-
-    let content: string | undefined;
-    if (crawl.success) {
-      if (crawl.markdown) {
-        content = crawl.markdown;
-      } else {
-        content = crawl.html;
-      }
-    }
-
-    if (!content) {
-      return Response.json(
-        {
-          success: false,
-          error: crawl.error ? crawl.error : "Failed to crawl company website",
-        },
-        { status: 400 },
-      );
-    }
-
-    console.log(content);
-
-    const { object } = await generateObject({
-      model: openai("gpt-4o-mini"),
-      schema: CompanyCompletionSchema,
+    const result = streamText({
+      tools: {
+        web_search_preview: openai.tools.webSearchPreview(),
+      },
+      model: openai.responses("gpt-4o-mini"),
       messages: [
         {
           role: "system",
-          content: `You are a helpful assistant that generates a company profile for a given company website.
-          You will be given the company website url and it's content.
-          You will need to generate a company profile for it.
-          If you can't find the information, return null.
-          These are the options for the business sector: ${BUSINESS_SECTORS.map((sector) => `${sector.name} (${sector.code})`).join(", ")}. Return the code.
-          These are the options for the country: ${COUNTRIES.map((country) => `${country.name} (${country.code})`).join(", ")}. Return the code.
-          These are the options for the language: ${LANGUAGES.map((language) => `${language.name} (${language.code})`).join(", ")}. Return the code.
-          If the business sector is not in the list, return null.
-          If the country is not in the list, return null.
-          If the language is not in the list, return null.
-          For the description, talk about what the company does, who it serves, and what it's mission is. Products and services it specializes in. And who are their clients.
-          `,
+          content: `You are a helpful assistant that generates a company profile for a given company website url.
+          You will need to generate a company profile for it. Use the web search tool to find the information.
+          The output format should be XML like this:
+          {
+            "name": "Company Name",
+            "description": "Company Description",
+            "website": "Company Website", 
+            "sector": "Business Sector",
+            "country": "Country",
+            "language": "Language"
+          }
+
+           For the description, talk about what the company does, who it serves, and what it's mission is. Products and services it specializes in. And who are their clients.
+           Return all the information in English.
+
+          If you can't find information, return null for the missing fields:
+          {
+            "name": "Company Name",
+            "description": "Company Description", 
+            "website": "Company Website",
+            "sector": "Business Sector",
+            "country": null,
+            "language": "Language"
+          }
+          
+          Just return the XML, no other text.
+          This is critical. RETURN THE XML ONLY.`,
         },
         {
           role: "user",
-          content: `Generate a company profile for ${companyWebsiteUrl} with the following content: ${content}`,
+          content: `Generate a company profile for acme.com`,
+        },
+        {
+          role: "assistant",
+          content: `{
+            "name": "Acme",
+            "description": "Acme is a company that makes widgets.",
+            "website": "https://acme.com",
+            "sector": "Manufacturing",
+            "country": "United States",
+            "language": "English"
+          }`,
+        },
+        {
+          role: "user",
+          content: `Generate a company profile for ${url}`,
         },
       ],
-      temperature: 0.5,
+      temperature: 0.7,
+      maxSteps: 10,
+      toolChoice: {
+        type: "tool",
+        toolName: "web_search_preview",
+      },
+      experimental_output: Output.object({
+        schema: CompanySchema,
+      }),
     });
 
-    return Response.json({
-      success: true,
-      data: object,
-    });
+    return result.toTextStreamResponse();
   } catch (error) {
     console.error(error);
     return new Response("Internal Server Error", { status: 500 });

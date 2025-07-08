@@ -1,5 +1,6 @@
 "use client";
 
+import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { CompanyDetailsStep, WebsiteUrlStep } from "@/components/forms";
 import {
   useBusinessSector,
@@ -10,6 +11,7 @@ import {
   useLanguage,
   useWebsiteUrl,
 } from "@/hooks/state";
+import { CompanySchema } from "@/schemas/company";
 
 export default function CompanyProfileForm() {
   const [currentStep] = useCurrentStep();
@@ -19,6 +21,17 @@ export default function CompanyProfileForm() {
   const [country] = useCountry();
   const [language] = useLanguage();
   const [description] = useDescription();
+
+  const { object, isLoading, stop, submit } = useObject({
+    api: "/api/ai/completion/company",
+    schema: CompanySchema,
+    onFinish: (completion) => {
+      console.log(completion);
+    },
+    onError: (error) => {
+      console.error(error);
+    },
+  });
 
   return (
     <div className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8">
@@ -67,6 +80,21 @@ export default function CompanyProfileForm() {
           <div className="px-6 py-8">
             {currentStep === 1 ? <WebsiteUrlStep /> : <CompanyDetailsStep />}
           </div>
+        </div>
+
+        <div className="mt-8 rounded-lg bg-muted p-4">
+          <button
+            type="button"
+            onClick={() =>
+              submit({
+                companyWebsiteUrl: "crafterstation.com",
+              })
+            }
+          >
+            Complete
+          </button>
+          <pre>{JSON.stringify(object, null, 2)}</pre>
+          <pre>{object?.name}</pre>
         </div>
 
         {/* Debug Info */}
