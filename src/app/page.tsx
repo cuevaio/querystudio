@@ -11,6 +11,7 @@ import {
   useName,
   useSector,
 } from "@/hooks/state";
+import { authClient } from "@/lib/auth-client";
 import { CompanySchema } from "@/schemas/company";
 
 export default function CompanyProfileForm() {
@@ -20,6 +21,8 @@ export default function CompanyProfileForm() {
   const [, setCountry] = useCountry();
   const [, setLanguage] = useLanguage();
   const [, setDescription] = useDescription();
+
+  const { data } = authClient.useSession();
 
   const {
     object,
@@ -57,7 +60,7 @@ export default function CompanyProfileForm() {
           {/* Header */}
           <div className="border-border border-b bg-card px-6 py-8">
             <h1 className="text-center font-bold text-3xl text-foreground">
-              Create Company Profile
+              Create Company Profile {data?.user?.name}
             </h1>
             <p className="mt-2 text-center text-muted-foreground">
               Step {currentStep} of 2

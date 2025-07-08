@@ -8,6 +8,13 @@
       "when": 1752005138742,
       "tag": "0000_overconfident_norrin_radd",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1752007650929,
+      "tag": "0001_funny_jane_foster",
+      "breakpoints": true
     }
   ]
 }
