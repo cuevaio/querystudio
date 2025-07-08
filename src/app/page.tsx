@@ -1,37 +1,50 @@
 "use client";
 
 import { experimental_useObject as useObject } from "@ai-sdk/react";
+import React from "react";
 import { CompanyDetailsStep, WebsiteUrlStep } from "@/components/forms";
 import {
-  useBusinessSector,
-  useCompanyName,
   useCountry,
   useCurrentStep,
   useDescription,
   useLanguage,
-  useWebsiteUrl,
+  useName,
+  useSector,
 } from "@/hooks/state";
 import { CompanySchema } from "@/schemas/company";
 
 export default function CompanyProfileForm() {
   const [currentStep] = useCurrentStep();
-  const [websiteUrl] = useWebsiteUrl();
-  const [companyName] = useCompanyName();
-  const [businessSector] = useBusinessSector();
-  const [country] = useCountry();
-  const [language] = useLanguage();
-  const [description] = useDescription();
+  const [, setName] = useName();
+  const [, setSector] = useSector();
+  const [, setCountry] = useCountry();
+  const [, setLanguage] = useLanguage();
+  const [, setDescription] = useDescription();
 
-  const { object, isLoading, stop, submit } = useObject({
+  const { object, submit } = useObject({
     api: "/api/ai/completion/company",
     schema: CompanySchema,
-    onFinish: (completion) => {
-      console.log(completion);
-    },
-    onError: (error) => {
-      console.error(error);
-    },
   });
+
+  React.useEffect(() => {
+    if (object) {
+      if (object.name) {
+        setName(object.name);
+      }
+      if (object.sector) {
+        setSector(object.sector);
+      }
+      if (object.country) {
+        setCountry(object.country);
+      }
+      if (object.language) {
+        setLanguage(object.language);
+      }
+      if (object.description) {
+        setDescription(object.description);
+      }
+    }
+  }, [object, setName, setSector, setCountry, setLanguage, setDescription]);
 
   return (
     <div className="min-h-screen bg-background px-4 py-12 sm:px-6 lg:px-8">
@@ -78,44 +91,16 @@ export default function CompanyProfileForm() {
 
           {/* Form Content */}
           <div className="px-6 py-8">
-            {currentStep === 1 ? <WebsiteUrlStep /> : <CompanyDetailsStep />}
-          </div>
-        </div>
-
-        <div className="mt-8 rounded-lg bg-muted p-4">
-          <button
-            type="button"
-            onClick={() =>
-              submit({
-                companyWebsiteUrl: "crafterstation.com",
-              })
-            }
-          >
-            Complete
-          </button>
-          <pre>{JSON.stringify(object, null, 2)}</pre>
-          <pre>{object?.name}</pre>
-        </div>
-
-        {/* Debug Info */}
-        <div className="mt-8 rounded-lg bg-muted p-4">
-          <h3 className="mb-2 font-medium text-foreground text-sm">
-            URL State Debug:
-          </h3>
-          <pre className="overflow-auto text-muted-foreground text-xs">
-            {JSON.stringify(
-              {
-                websiteUrl,
-                companyName,
-                businessSector,
-                country,
-                language,
-                description,
-              },
-              null,
-              2,
+            {currentStep === 1 ? (
+              <WebsiteUrlStep
+                generate={({ websiteUrl }) => {
+                  submit({ websiteUrl });
+                }}
+              />
+            ) : (
+              <CompanyDetailsStep />
             )}
-          </pre>
+          </div>
         </div>
       </div>
     </div>

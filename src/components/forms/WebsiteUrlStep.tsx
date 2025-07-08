@@ -1,54 +1,35 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import type React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCompanyCompletion } from "@/hooks/ai/completion/useCompanyCompletion";
-import { useBusinessSector } from "@/hooks/state/useBusinessSector";
-import { useCompanyName } from "@/hooks/state/useCompanyName";
-import { useCountry } from "@/hooks/state/useCountry";
-import { useCurrentStep } from "@/hooks/state/useCurrentStep";
-import { useDescription } from "@/hooks/state/useDescription";
-import { useLanguage } from "@/hooks/state/useLanguage";
-import { useWebsiteUrl } from "@/hooks/state/useWebsiteUrl";
+import { useCurrentStep, useWebsiteUrl } from "@/hooks/state";
 
-export function WebsiteUrlStep() {
+export function WebsiteUrlStep({
+  generate,
+}: {
+  generate: ({ websiteUrl }: { websiteUrl: string }) => void;
+}) {
   const [websiteUrl, setWebsiteUrl] = useWebsiteUrl();
-  const [, setCompanyName] = useCompanyName();
-  const [, setBusinessSector] = useBusinessSector();
-  const [, setCountry] = useCountry();
-  const [, setLanguage] = useLanguage();
-  const [, setDescription] = useDescription();
   const [, setCurrentStep] = useCurrentStep();
-  const { mutate: completeCompany, isPending } = useCompanyCompletion();
+  const { isPending } = useCompanyCompletion();
 
-  const handleNext = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const formData = new FormData(e.currentTarget);
     const formWebsiteUrl = formData.get("websiteUrl") as string;
 
+    setWebsiteUrl(formWebsiteUrl);
+
     if (!websiteUrl || formWebsiteUrl !== websiteUrl) {
-      completeCompany(formWebsiteUrl, {
-        onSuccess: (data) => {
-          // Set the form data with AI completion results
-          setCompanyName(data.name);
-          setBusinessSector(data.sector);
-          setCountry(data.country);
-          setLanguage(data.language);
-          setDescription(data.description);
-          setWebsiteUrl(formWebsiteUrl);
-          setCurrentStep(2);
-        },
-        onError: (error) => {
-          toast.error(error.message);
-        },
-      });
-    } else {
-      setCurrentStep(2);
+      generate({ websiteUrl: formWebsiteUrl });
     }
+
+    setCurrentStep(2);
   };
 
   return (
@@ -64,7 +45,7 @@ export function WebsiteUrlStep() {
 
       <form
         className="space-y-4"
-        onSubmit={handleNext}
+        onSubmit={handleSubmit}
         name="websiteUrlForm"
         id="websiteUrlForm"
       >
