@@ -8,6 +8,8 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { user } from "./auth";
+import { query } from "./query";
+import { topic } from "./topics";
 
 export const organization = pgTable("organization", {
   id: varchar("id", { length: 12 }).primaryKey(),
@@ -34,13 +36,14 @@ export const membershipRole = pgEnum("membership_role", ["admin", "member"]);
 export const membership = pgTable(
   "membership",
   {
-    organizationId: varchar("organization_id", { length: 12 }).references(
-      () => organization.id,
-      { onDelete: "cascade" },
-    ),
-    userId: text("user_id").references(() => user.id, {
-      onDelete: "cascade",
-    }),
+    organizationId: varchar("organization_id", { length: 12 })
+      .references(() => organization.id, { onDelete: "cascade" })
+      .notNull(),
+    userId: text("user_id")
+      .references(() => user.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     role: membershipRole("role").notNull(),
 
     createdAt: timestamp("created_at")
@@ -55,6 +58,8 @@ export const membership = pgTable(
 
 export const organizationRelations = relations(organization, ({ many }) => ({
   memberships: many(membership),
+  topics: many(topic),
+  queries: many(query),
 }));
 
 export const membershipRelations = relations(membership, ({ one }) => ({

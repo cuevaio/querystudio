@@ -2,6 +2,7 @@
 
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import { Sparkles, WandSparklesIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
 import { createOrganization } from "@/actions/create-organization";
@@ -35,6 +36,7 @@ export function CompanyDetailsStep({
 }: {
   isLoadingInitial: boolean;
 }) {
+  const router = useRouter();
   const [websiteUrl] = useWebsiteUrl();
 
   const [, setCurrentStep] = useCurrentStep();
@@ -81,7 +83,6 @@ export function CompanyDetailsStep({
     {
       input: {
         name: "",
-        slug: "",
         websiteUrl: "",
         sector: "",
         country: "",
@@ -96,11 +97,14 @@ export function CompanyDetailsStep({
   React.useEffect(() => {
     if (state.output.success) {
       toast.success("Organization created successfully!");
+      router.push(
+        `/${state.output.data.slug}?runId=${state.output.data.run.id}&publicAccessToken=${state.output.data.run.publicAccessToken}`,
+      );
       // Reset form or redirect
     } else if (state.output.error) {
       toast.error(state.output.error);
     }
-  }, [state.output]);
+  }, [state.output, router]);
 
   const handleRegenerate = async () => {
     if (!websiteUrl) {
@@ -125,7 +129,7 @@ export function CompanyDetailsStep({
         name="websiteUrl"
         defaultValue={websiteUrl ?? undefined}
       />
-      <input type="hidden" name="sector" value={sector ?? undefined} />
+      <input type="hidden" name="sector" defaultValue={sector ?? undefined} />
       <div className="flex items-start justify-between">
         <div>
           <h2 className="mb-2 font-semibold text-2xl text-foreground">

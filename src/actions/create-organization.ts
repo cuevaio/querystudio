@@ -1,11 +1,13 @@
 "use server";
 
+import { tasks } from "@trigger.dev/sdk/v3";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { membership, organization } from "@/db/schema";
 import { nanoid } from "@/lib/nanoid";
+import type { createTopicsAndQueries } from "@/trigger/create-topics-and-queries";
 
 export type CreateOrganizationActionState = {
   input: {
@@ -17,7 +19,13 @@ export type CreateOrganizationActionState = {
     description: string;
   };
   output:
-    | { success: true; data: { organizationId: string } }
+    | {
+        success: true;
+        data: {
+          slug: string;
+          run: { id: string; publicAccessToken: string };
+        };
+      }
     | { success: false; error?: string };
 };
 
@@ -78,27 +86,43 @@ export async function createOrganization(
     const organizationId = nanoid(12);
 
     // Create organization
-    await db.insert(organization).values({
-      id: organizationId,
-      name: parsed.data.name,
-      slug: slugify(parsed.data.name),
-      websiteUrl: parsed.data.websiteUrl,
-      sector: parsed.data.sector,
-      country: parsed.data.country,
-      language: parsed.data.language,
-      description: parsed.data.description,
-    });
+    await Promise.all([
+      db.insert(organization).values({
+        id: organizationId,
+        name: parsed.data.name,
+        slug: slugify(parsed.data.name),
+        websiteUrl: parsed.data.websiteUrl,
+        sector: parsed.data.sector,
+        country: parsed.data.country,
+        language: parsed.data.language,
+        description: parsed.data.description,
+      }),
 
-    // Create membership with admin role
-    await db.insert(membership).values({
-      organizationId,
-      userId,
-      role: "admin",
-    });
+      db.insert(membership).values({
+        organizationId,
+        userId,
+        role: "admin",
+      }),
+    ]);
+
+    const run = await tasks.trigger<typeof createTopicsAndQueries>(
+      "create-topics-and-queries",
+      {
+        organizationId,
+      },
+    );
+
+    run.publicAccessToken;
 
     state.output = {
       success: true,
-      data: { organizationId },
+      data: {
+        slug: slugify(parsed.data.name),
+        run: {
+          id: run.id,
+          publicAccessToken: run.publicAccessToken,
+        },
+      },
     };
   } catch (err) {
     // Handle unique constraint violations
