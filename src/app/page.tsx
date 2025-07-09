@@ -60,7 +60,7 @@ export default function CompanyProfileForm() {
           {/* Header */}
           <div className="border-border border-b bg-card px-6 py-8">
             <h1 className="text-center font-bold text-3xl text-foreground">
-              Create Company Profile {data?.user?.name}
+              Create Company Profile
             </h1>
             <p className="mt-2 text-center text-muted-foreground">
               Step {currentStep} of 2
@@ -110,6 +110,11 @@ export default function CompanyProfileForm() {
           </div>
         </div>
       </div>
+      {data?.user && (
+        <p className="mt-4 text-center text-muted-foreground">
+          Signed in as {data.user.name}
+        </p>
+      )}
     </div>
   );
 }

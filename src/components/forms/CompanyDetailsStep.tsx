@@ -98,7 +98,7 @@ export function CompanyDetailsStep({
     if (state.output.success) {
       toast.success("Organization created successfully!");
       router.push(
-        `/${state.output.data.slug}?runId=${state.output.data.run.id}&publicAccessToken=${state.output.data.run.publicAccessToken}`,
+        `/${state.output.data.slug}/seed?runId=${state.output.data.run.id}&publicAccessToken=${state.output.data.run.publicAccessToken}`,
       );
       // Reset form or redirect
     } else if (state.output.error) {
