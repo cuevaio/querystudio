@@ -38,9 +38,9 @@ export async function POST(request: Request) {
 
     const result = streamText({
       tools: {
-        web_search_preview: openai.tools.webSearchPreview(),
+        web_search_preview: openai.tools.webSearchPreview({}),
       },
-      model: openai.responses("gpt-4o-mini"),
+      model: openai.responses("gpt-4.1"),
       messages: [
         {
           role: "system",
@@ -63,11 +63,10 @@ export async function POST(request: Request) {
         },
         {
           role: "user",
-          content: `Generate a company profile for ${url}`,
+          content: `Perfect! Now generate a company profile for ${url}`,
         },
       ],
       temperature: 0.7,
-      maxSteps: 10,
       toolChoice: {
         type: "tool",
         toolName: "web_search_preview",

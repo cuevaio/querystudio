@@ -1,13 +1,21 @@
 "use server";
 
 import { tasks } from "@trigger.dev/sdk/v3";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { membership, organization } from "@/db/schema";
+import {
+  membership,
+  organization,
+  type QueryInsert,
+  query,
+  topic,
+} from "@/db/schema";
 import { nanoid } from "@/lib/nanoid";
-import type { createTopicsAndQueries } from "@/trigger/create-topics-and-queries";
+import { AIGeneratedQuerySchema } from "@/schemas/ai-generated-query";
+import type { generateInitialQueries } from "@/trigger/generate-initial-queries";
 
 export type CreateOrganizationActionState = {
   input: {
@@ -17,6 +25,7 @@ export type CreateOrganizationActionState = {
     country: string;
     language: string;
     description: string;
+    topics: string;
   };
   output:
     | {
@@ -42,6 +51,7 @@ export async function createOrganization(
     country: formData.get("country"),
     language: formData.get("language"),
     description: formData.get("description"),
+    topics: JSON.parse(formData.get("topics")?.toString() || "[]"),
   };
 
   const schema = z.object({
@@ -51,6 +61,13 @@ export async function createOrganization(
     country: z.string().min(1, "Country is required"),
     language: z.string().min(1, "Language is required"),
     description: z.string().min(1, "Description is required"),
+    topics: z.array(
+      z.object({
+        name: z.string().min(1, "Topic name is required"),
+        description: z.string().min(1, "Topic description is required"),
+        queries: z.array(AIGeneratedQuerySchema),
+      }),
+    ),
   });
 
   const parsed = schema.safeParse(raw);
@@ -85,28 +102,63 @@ export async function createOrganization(
     const userId = session.user.id;
     const organizationId = nanoid(12);
 
+    let slug = slugify(parsed.data.name);
+
+    const existingOrganization = await db.query.organization.findFirst({
+      where: eq(organization.slug, slug),
+    });
+
+    if (existingOrganization) {
+      slug = `${slug}-${nanoid(4)}`;
+    }
+
     // Create organization
-    await Promise.all([
-      db.insert(organization).values({
-        id: organizationId,
-        name: parsed.data.name,
-        slug: slugify(parsed.data.name),
-        websiteUrl: parsed.data.websiteUrl,
-        sector: parsed.data.sector,
-        country: parsed.data.country,
-        language: parsed.data.language,
-        description: parsed.data.description,
-      }),
+    await db.insert(organization).values({
+      id: organizationId,
+      name: parsed.data.name,
+      slug,
+      websiteUrl: parsed.data.websiteUrl,
+      sector: parsed.data.sector,
+      country: parsed.data.country,
+      language: parsed.data.language,
+      description: parsed.data.description,
+    });
 
-      db.insert(membership).values({
+    await db.insert(membership).values({
+      organizationId,
+      userId,
+      role: "admin",
+    });
+
+    const topics = parsed.data.topics.map((topic) => {
+      const topicId = nanoid(12);
+      return {
+        id: topicId,
+        name: topic.name,
+        description: topic.description,
         organizationId,
-        userId,
-        role: "admin",
-      }),
-    ]);
+        queries: topic.queries.map(
+          (query) =>
+            ({
+              id: nanoid(12),
+              content: query.query,
+              queryType: query.companySpecific ? "brand" : "market",
+              topicId,
+              organizationId,
+            }) satisfies QueryInsert,
+        ),
+      };
+    });
 
-    const run = await tasks.trigger<typeof createTopicsAndQueries>(
-      "create-topics-and-queries",
+    console.log(topics);
+
+    await db
+      .insert(topic)
+      .values(topics.map((topic) => ({ ...topic, queries: undefined })));
+    await db.insert(query).values(topics.flatMap((topic) => topic.queries));
+
+    const run = await tasks.trigger<typeof generateInitialQueries>(
+      "generate-initial-queries",
       {
         organizationId,
       },
@@ -117,7 +169,7 @@ export async function createOrganization(
     state.output = {
       success: true,
       data: {
-        slug: slugify(parsed.data.name),
+        slug,
         run: {
           id: run.id,
           publicAccessToken: run.publicAccessToken,
@@ -125,24 +177,17 @@ export async function createOrganization(
       },
     };
   } catch (err) {
-    // Handle unique constraint violations
-    if (err instanceof Error && err.message.includes("unique constraint")) {
+    if (err instanceof Error) {
       if (err.message.includes("slug")) {
         state.output = {
           success: false,
           error: "An organization with this slug already exists",
         };
-      } else {
-        state.output = {
-          success: false,
-          error: "Organization already exists",
-        };
       }
     } else {
       state.output = {
         success: false,
-        error:
-          err instanceof Error ? err.message : "Failed to create organization",
+        error: "Failed to create organization",
       };
     }
   }

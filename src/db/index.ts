@@ -20,7 +20,7 @@ if (!global.db) {
   global.db = drizzle({
     client: global.sql,
     schema,
-    logger: process.env.NODE_ENV === "development",
+    logger: false,
   });
 }
 

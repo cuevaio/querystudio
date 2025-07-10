@@ -36,6 +36,20 @@
       "when": 1752033099305,
       "tag": "0004_free_toad",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1752181858373,
+      "tag": "0005_brief_living_lightning",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1752182412886,
+      "tag": "0006_blushing_changeling",
+      "breakpoints": true
     }
   ]
 }

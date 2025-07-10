@@ -28,4 +28,5 @@ If you can't find information, return null for the missing fields:
 }
           
 Just return the XML, no other text.
-This is critical. RETURN THE XML ONLY.`;
+This is critical. RETURN THE XML ONLY.
+IMPORTANT: Your response must be in english.`;

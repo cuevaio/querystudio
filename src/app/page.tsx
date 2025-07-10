@@ -2,7 +2,11 @@
 
 import { experimental_useObject as useObject } from "@ai-sdk/react";
 import React from "react";
-import { CompanyDetailsStep, WebsiteUrlStep } from "@/components/forms";
+import {
+  CompanyDetailsStep,
+  TopicsSelectionStep,
+  WebsiteUrlStep,
+} from "@/components/forms";
 import {
   useCountry,
   useCurrentStep,
@@ -63,7 +67,7 @@ export default function CompanyProfileForm() {
               Create Company Profile
             </h1>
             <p className="mt-2 text-center text-muted-foreground">
-              Step {currentStep} of 2
+              Step {currentStep} of 3
             </p>
           </div>
 
@@ -93,6 +97,20 @@ export default function CompanyProfileForm() {
               >
                 2
               </div>
+              <div
+                className={`mx-4 h-1 flex-1 ${
+                  currentStep >= 3 ? "bg-primary" : "bg-muted-foreground/20"
+                }`}
+              ></div>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full font-medium text-sm ${
+                  currentStep >= 3
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted-foreground/20 text-muted-foreground"
+                }`}
+              >
+                3
+              </div>
             </div>
           </div>
 
@@ -104,8 +122,10 @@ export default function CompanyProfileForm() {
                   submit({ websiteUrl });
                 }}
               />
-            ) : (
+            ) : currentStep === 2 ? (
               <CompanyDetailsStep isLoadingInitial={isLoadingInitial} />
+            ) : (
+              <TopicsSelectionStep />
             )}
           </div>
         </div>

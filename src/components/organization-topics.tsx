@@ -2,7 +2,7 @@
 
 import React from "react";
 import { AddTopicButton } from "@/components/add-topic-button";
-import { TopicCard } from "@/components/topic-card";
+import { TopicAccordion } from "@/components/topic-accordion";
 
 interface OrganizationTopicsProps {
   organization: {
@@ -157,21 +157,16 @@ export function OrganizationTopics({ organization }: OrganizationTopicsProps) {
         />
       </div>
 
-      {/* Topics Grid */}
+      {/* Topics Accordion */}
       {topics.length > 0 ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {topics.map((topic) => (
-            <TopicCard
-              key={topic.id}
-              topic={topic}
-              onTopicDeleted={handleTopicDeleted}
-              onTopicUpdated={handleTopicUpdated}
-              onQueryAdded={handleQueryAdded}
-              onQueryUpdated={handleQueryUpdated}
-              onQueryDeleted={handleQueryDeleted}
-            />
-          ))}
-        </div>
+        <TopicAccordion
+          topics={topics}
+          onTopicDeleted={handleTopicDeleted}
+          onTopicUpdated={handleTopicUpdated}
+          onQueryAdded={handleQueryAdded}
+          onQueryUpdated={handleQueryUpdated}
+          onQueryDeleted={handleQueryDeleted}
+        />
       ) : (
         <div className="py-12 text-center">
           <div className="space-y-3">

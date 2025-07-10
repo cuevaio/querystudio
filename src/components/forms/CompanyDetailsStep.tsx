@@ -5,7 +5,7 @@ import { Sparkles, WandSparklesIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
-import { createOrganization } from "@/actions/create-organization";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +36,7 @@ export function CompanyDetailsStep({
 }: {
   isLoadingInitial: boolean;
 }) {
-  const router = useRouter();
+  const _router = useRouter();
   const [websiteUrl] = useWebsiteUrl();
 
   const [, setCurrentStep] = useCurrentStep();
@@ -78,33 +78,14 @@ export function CompanyDetailsStep({
     }
   }, [object, setName, setSector, setCountry, setLanguage, setDescription]);
 
-  const [state, formAction, isPending] = React.useActionState(
-    createOrganization,
-    {
-      input: {
-        name: "",
-        websiteUrl: "",
-        sector: "",
-        country: "",
-        language: "",
-        description: "",
-      },
-      output: { success: false },
-    },
-  );
-
-  // Handle form submission feedback
-  React.useEffect(() => {
-    if (state.output.success) {
-      toast.success("Organization created successfully!");
-      router.push(
-        `/${state.output.data.slug}/seed?runId=${state.output.data.run.id}&publicAccessToken=${state.output.data.run.publicAccessToken}`,
-      );
-      // Reset form or redirect
-    } else if (state.output.error) {
-      toast.error(state.output.error);
+  const handleNext = () => {
+    // Validate required fields before advancing
+    if (!name || !sector || !country || !language || !description) {
+      toast.error("Please fill in all required fields");
+      return;
     }
-  }, [state.output, router]);
+    setCurrentStep(3);
+  };
 
   const handleRegenerate = async () => {
     if (!websiteUrl) {
@@ -123,13 +104,7 @@ export function CompanyDetailsStep({
   };
 
   return (
-    <form action={formAction} className="space-y-6">
-      <input
-        type="hidden"
-        name="websiteUrl"
-        defaultValue={websiteUrl ?? undefined}
-      />
-      <input type="hidden" name="sector" defaultValue={sector ?? undefined} />
+    <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h2 className="mb-2 font-semibold text-2xl text-foreground">
@@ -172,7 +147,6 @@ export function CompanyDetailsStep({
             onChange={(e) => setName(e.target.value)}
             className="mt-1"
             required
-            name="name"
           />
         </div>
 
@@ -226,7 +200,6 @@ export function CompanyDetailsStep({
             onChange={(e) => setCountry(e.target.value)}
             className="mt-1"
             required
-            name="country"
             disabled={isLoading}
             placeholder="e.g. United States"
           />
@@ -253,7 +226,6 @@ export function CompanyDetailsStep({
             onChange={(e) => setLanguage(e.target.value)}
             className="mt-1"
             required
-            name="language"
             disabled={isLoading}
             placeholder="e.g. English"
           />
@@ -282,7 +254,6 @@ export function CompanyDetailsStep({
           onChange={(e) => setDescription(e.target.value)}
           className="mt-1 min-h-[120px]"
           required
-          name="description"
           disabled={isLoading}
           placeholder="Tell us about your company, its mission, values, and what makes it unique..."
         />
@@ -295,18 +266,14 @@ export function CompanyDetailsStep({
           type="button"
           variant="outline"
           onClick={() => setCurrentStep(1)}
-          disabled={isPending || isLoading}
+          disabled={isLoading}
         >
           Back
         </Button>
-        <Button
-          type="submit"
-          className="px-8 py-2"
-          disabled={isPending || isLoading}
-        >
-          Create Profile
+        <Button onClick={handleNext} className="px-8 py-2" disabled={isLoading}>
+          Continue
         </Button>
       </div>
-    </form>
+    </div>
   );
 }

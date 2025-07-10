@@ -96,6 +96,7 @@ export async function createQueryAction(
       topicId: parsed.data.topicId,
       organizationId: parsed.data.organizationId,
       content: parsed.data.content,
+      queryType: "market", // Default to market query
     });
 
     state.output = {

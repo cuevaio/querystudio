@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -9,12 +10,16 @@ import {
 import { organization } from "./organization";
 import { topic } from "./topics";
 
+export const queryType = pgEnum("query_type", ["market", "brand"]);
+
 export const query = pgTable("query", {
   id: varchar("id", { length: 12 }).primaryKey(),
 
   content: text("content").notNull(),
 
   isActive: boolean("is_active").notNull().default(true),
+
+  queryType: queryType("query_type").notNull(),
 
   topicId: varchar("topic_id", { length: 12 })
     .references(() => topic.id, {
@@ -45,3 +50,5 @@ export const queryRelations = relations(query, ({ one }) => ({
     references: [organization.id],
   }),
 }));
+
+export type QueryInsert = typeof query.$inferInsert;
