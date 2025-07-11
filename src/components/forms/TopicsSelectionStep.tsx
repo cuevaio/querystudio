@@ -158,7 +158,7 @@ export function TopicsSelectionStep() {
 
       // Use setTimeout to ensure navigation happens after form submission completes
       setTimeout(() => {
-        const url = `/${successOutput.data.slug}/seed?runId=${successOutput.data.run.id}&publicAccessToken=${successOutput.data.run.publicAccessToken}`;
+        const url = `/${successOutput.data.slug}`;
         console.log("Navigating to:", url);
         router.push(url);
       }, 100);
