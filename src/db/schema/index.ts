@@ -11,4 +11,3 @@ export * from "./queries";
 export * from "./query_executions";
 export * from "./sources";
 export * from "./topics";
-export * from "./users";

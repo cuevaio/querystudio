@@ -18,22 +18,22 @@ export const domains = pgTable(
     name: text().notNull(),
     category: text(),
   },
-  (table) => ({
-    domainsCategoryIdx: index("domains_category_idx").using(
+  (table) => [
+    index("domains_category_idx").using(
       "btree",
-      table.category.asc().nullsLast(),
+      table.category.asc().nullsLast().op("text_ops"),
     ),
-    domainsProjectNameKey: uniqueIndex("domains_project_name_key").using(
+    uniqueIndex("domains_project_name_key").using(
       "btree",
-      table.projectId.asc().nullsLast(),
-      table.name.asc().nullsLast(),
+      table.projectId.asc().nullsLast().op("text_ops"),
+      table.name.asc().nullsLast().op("text_ops"),
     ),
-    domainsProjectIdFkey: foreignKey({
+    foreignKey({
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "domains_project_id_fkey",
     }),
-  }),
+  ],
 );
 
 export const domainsRelations = relations(domains, ({ one, many }) => ({

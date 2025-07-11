@@ -1,1 +1,0 @@
-ALTER TABLE "query" RENAME COLUMN "type" TO "query_type";

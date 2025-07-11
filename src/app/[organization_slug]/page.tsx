@@ -1,6 +1,8 @@
 import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/db";
@@ -18,16 +20,15 @@ export default async function OrganizationPage({
 }: OrganizationPageProps) {
   const { organization_slug } = await params;
 
-  // Get authenticated user
-  // const session = await auth.api.getSession({
-  //   headers: await headers(),
-  // });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  // if (!session?.user?.id) {
-  //   redirect("/signin");
-  // }
+  if (!session?.user?.id) {
+    redirect("/signin");
+  }
 
-  const userId = "466d24ca-2936-4bba-9e1d-99badb2aa952";
+  const userId = session.user.id;
 
   // Get organization with topics
   const org = await db.query.projects.findFirst({

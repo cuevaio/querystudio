@@ -11,13 +11,13 @@ export const topics = pgTable(
     name: text().notNull(),
     description: text(),
   },
-  (table) => ({
-    topicsProjectIdFkey: foreignKey({
+  (table) => [
+    foreignKey({
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "topics_project_id_fkey",
     }),
-  }),
+  ],
 );
 
 export const topicsRelations = relations(topics, ({ one, many }) => ({

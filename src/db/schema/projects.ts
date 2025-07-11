@@ -9,6 +9,7 @@ import {
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
+import { users } from "./auth";
 import { competitors } from "./competitors";
 import { domains } from "./domains";
 import { executions } from "./executions";
@@ -17,39 +18,38 @@ import { projectsUsers } from "./projects_users";
 import { queries } from "./queries";
 import { sources } from "./sources";
 import { topics } from "./topics";
-import { users } from "./users";
 
 export const projects = pgTable(
   "projects",
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
     name: text().notNull(),
-    slug: text("slug").unique().notNull(),
+    slug: text(),
     description: text(),
     url: text(),
     status: boolean().default(true),
     region: text(),
     sector: text(),
-    language: text("language"),
+    language: text(),
     lastAnalysis: date("last_analysis"),
     logo: text(),
-    userId: uuid("user_id").notNull(),
+    userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", {
       withTimezone: true,
       mode: "string",
     }).defaultNow(),
   },
-  (table) => ({
-    projectsStatusIdx: index("projects_status_idx").using(
+  (table) => [
+    index("projects_status_idx").using(
       "btree",
-      table.status.asc().nullsLast(),
+      table.status.asc().nullsLast().op("bool_ops"),
     ),
-    projectsUserIdFkey: foreignKey({
+    foreignKey({
       columns: [table.userId],
       foreignColumns: [users.id],
       name: "projects_user_id_fkey",
     }),
-  }),
+  ],
 );
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({

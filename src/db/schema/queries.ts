@@ -3,6 +3,7 @@ import {
   boolean,
   foreignKey,
   index,
+  pgEnum,
   pgTable,
   text,
   uuid,
@@ -10,6 +11,8 @@ import {
 import { projects } from "./projects";
 import { queryExecutions } from "./query_executions";
 import { topics } from "./topics";
+
+export const queryTypeEnum = pgEnum("query_type", ["sector", "product"]);
 
 export const queries = pgTable(
   "queries",
@@ -22,22 +25,22 @@ export const queries = pgTable(
     active: boolean().default(true),
     queryType: text("query_type").default("sector").notNull(),
   },
-  (table) => ({
-    queriesProjectIdIdx: index("queries_project_id_idx").using(
+  (table) => [
+    index("queries_project_id_idx").using(
       "btree",
-      table.projectId.asc().nullsLast(),
+      table.projectId.asc().nullsLast().op("uuid_ops"),
     ),
-    queriesProjectIdFkey: foreignKey({
+    foreignKey({
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "queries_project_id_fkey",
     }),
-    queriesTopicIdFkey: foreignKey({
+    foreignKey({
       columns: [table.topicId],
       foreignColumns: [topics.id],
       name: "queries_topic_id_fkey",
     }),
-  }),
+  ],
 );
 
 export const queriesRelations = relations(queries, ({ one, many }) => ({

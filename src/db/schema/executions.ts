@@ -13,13 +13,13 @@ export const executions = pgTable(
       mode: "string",
     }).defaultNow(),
   },
-  (table) => ({
-    executionsProjectIdFkey: foreignKey({
+  (table) => [
+    foreignKey({
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "executions_project_id_fkey",
     }),
-  }),
+  ],
 );
 
 export const executionsRelations = relations(executions, ({ one, many }) => ({

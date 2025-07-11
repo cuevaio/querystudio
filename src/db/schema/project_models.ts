@@ -10,21 +10,22 @@ export const projectModels = pgTable(
     projectId: uuid("project_id"),
     modelId: uuid("model_id"),
   },
-  (table) => ({
-    projectModelsModelIdFkey: foreignKey({
+  (table) => [
+    foreignKey({
       columns: [table.modelId],
       foreignColumns: [models.id],
       name: "project_models_model_id_fkey",
     }),
-    projectModelsProjectIdFkey: foreignKey({
+    foreignKey({
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "project_models_project_id_fkey",
     }),
-    projectModelsProjectIdModelIdKey: unique(
-      "project_models_project_id_model_id_key",
-    ).on(table.projectId, table.modelId),
-  }),
+    unique("project_models_project_id_model_id_key").on(
+      table.projectId,
+      table.modelId,
+    ),
+  ],
 );
 
 export const projectModelsRelations = relations(projectModels, ({ one }) => ({

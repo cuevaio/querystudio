@@ -6,13 +6,12 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { membership, topic } from "@/db/schema";
-import { nanoid } from "@/lib/nanoid";
+import { projectsUsers, topics } from "@/db/schema";
 
 // Create Topic Action
 export type CreateTopicActionState = {
   input: {
-    organizationId: string;
+    projectId: string;
     name: string;
     description: string;
   };
@@ -27,13 +26,13 @@ export async function createTopicAction(
 ): Promise<CreateTopicActionState> {
   let slug: string | undefined;
   const raw = {
-    organizationId: formData.get("organizationId") as string,
+    projectId: formData.get("projectId") as string,
     name: formData.get("name") as string,
     description: formData.get("description") as string,
   };
 
   const schema = z.object({
-    organizationId: z.string().min(1, "Organization ID is required"),
+    projectId: z.string().min(1, "Project ID is required"),
     name: z.string().min(1, "Topic name is required"),
     description: z.string().min(1, "Description is required"),
   });
@@ -68,17 +67,17 @@ export async function createTopicAction(
 
     const userId = session.user.id;
 
-    const _membership = await db.query.membership.findFirst({
+    const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
-        eq(membership.userId, userId),
-        eq(membership.organizationId, parsed.data.organizationId),
+        eq(projectsUsers.userId, userId),
+        eq(projectsUsers.projectId, parsed.data.projectId),
       ),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
-    if (!_membership) {
+    if (!_projectUser) {
       state.output = {
         success: false,
         error: "Unauthorized",
@@ -86,16 +85,19 @@ export async function createTopicAction(
       return state;
     }
 
-    const { organization } = _membership;
-    slug = organization.slug;
+    const { project } = _projectUser;
+    slug = project.slug || undefined;
 
-    const topicId = nanoid();
-    await db.insert(topic).values({
-      id: topicId,
-      organizationId: parsed.data.organizationId,
-      name: parsed.data.name,
-      description: parsed.data.description,
-    });
+    const insertedTopics = await db
+      .insert(topics)
+      .values({
+        projectId: parsed.data.projectId,
+        name: parsed.data.name,
+        description: parsed.data.description,
+      })
+      .returning();
+
+    const topicId = insertedTopics[0].id;
 
     state.output = {
       success: true,
@@ -171,10 +173,10 @@ export async function updateTopicAction(
 
     const userId = session.user.id;
 
-    const _topic = await db.query.topic.findFirst({
-      where: eq(topic.id, parsed.data.topicId),
+    const _topic = await db.query.topics.findFirst({
+      where: eq(topics.id, parsed.data.topicId),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
@@ -186,17 +188,17 @@ export async function updateTopicAction(
       return state;
     }
 
-    const _membership = await db.query.membership.findFirst({
+    const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
-        eq(membership.userId, userId),
-        eq(membership.organizationId, _topic.organizationId),
+        eq(projectsUsers.userId, userId),
+        eq(projectsUsers.projectId, _topic.projectId!),
       ),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
-    if (!_membership) {
+    if (!_projectUser) {
       state.output = {
         success: false,
         error: "Unauthorized",
@@ -204,16 +206,15 @@ export async function updateTopicAction(
       return state;
     }
 
-    const { organization } = _topic;
-    slug = organization.slug;
+    const { project } = _topic;
+    slug = project?.slug || undefined;
 
     await db
-      .update(topic)
+      .update(topics)
       .set({
         name: parsed.data.name,
-        updatedAt: new Date(),
       })
-      .where(eq(topic.id, parsed.data.topicId));
+      .where(eq(topics.id, parsed.data.topicId));
 
     state.output = {
       success: true,
@@ -286,10 +287,10 @@ export async function deleteTopicAction(
 
     const userId = session.user.id;
 
-    const _topic = await db.query.topic.findFirst({
-      where: eq(topic.id, parsed.data.topicId),
+    const _topic = await db.query.topics.findFirst({
+      where: eq(topics.id, parsed.data.topicId),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
@@ -301,17 +302,17 @@ export async function deleteTopicAction(
       return state;
     }
 
-    const _membership = await db.query.membership.findFirst({
+    const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
-        eq(membership.userId, userId),
-        eq(membership.organizationId, _topic.organizationId),
+        eq(projectsUsers.userId, userId),
+        eq(projectsUsers.projectId, _topic.projectId!),
       ),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
-    if (!_membership) {
+    if (!_projectUser) {
       state.output = {
         success: false,
         error: "Unauthorized",
@@ -319,10 +320,10 @@ export async function deleteTopicAction(
       return state;
     }
 
-    const { organization } = _topic;
-    slug = organization.slug;
+    const { project } = _topic;
+    slug = project?.slug || undefined;
 
-    await db.delete(topic).where(eq(topic.id, parsed.data.topicId));
+    await db.delete(topics).where(eq(topics.id, parsed.data.topicId));
 
     state.output = {
       success: true,

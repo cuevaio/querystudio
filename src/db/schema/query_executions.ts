@@ -14,23 +14,23 @@ export const queryExecutions = pgTable(
     modelId: uuid("model_id"),
     response: text(),
   },
-  (table) => ({
-    queryExecutionsExecutionIdFkey: foreignKey({
+  (table) => [
+    foreignKey({
       columns: [table.executionId],
       foreignColumns: [executions.id],
       name: "query_executions_execution_id_fkey",
     }),
-    queryExecutionsModelIdFkey: foreignKey({
+    foreignKey({
       columns: [table.modelId],
       foreignColumns: [models.id],
       name: "query_executions_model_id_fkey",
     }),
-    queryExecutionsQueryIdFkey: foreignKey({
+    foreignKey({
       columns: [table.queryId],
       foreignColumns: [queries.id],
       name: "query_executions_query_id_fkey",
     }),
-  }),
+  ],
 );
 
 export const queryExecutionsRelations = relations(

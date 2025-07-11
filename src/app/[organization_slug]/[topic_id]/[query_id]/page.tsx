@@ -1,7 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { QueryActionsMenu } from "@/components/query-actions-menu";
 import { QueryChatUI } from "@/components/query-chat-ui";
 import { Badge } from "@/components/ui/badge";
@@ -20,18 +22,16 @@ interface QueryPageProps {
 export default async function QueryPage({ params }: QueryPageProps) {
   const { organization_slug, topic_id, query_id } = await params;
 
-  // Get authenticated user
-  // const session = await auth.api.getSession({
-  //   headers: await headers(),
-  // });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  // if (!session?.user?.id) {
-  //   redirect("/signin");
-  // }
+  if (!session?.user?.id) {
+    redirect("/signin");
+  }
 
-  const userId = "466d24ca-2936-4bba-9e1d-99badb2aa952";
+  const userId = session.user.id;
 
-  // Get query with topic and organization
   const queryData = await db.query.queries.findFirst({
     where: and(eq(queries.id, query_id)),
     with: {
@@ -89,12 +89,12 @@ export default async function QueryPage({ params }: QueryPageProps) {
               <div className="mb-4 flex items-center gap-2">
                 <Badge
                   variant={
-                    queryData.queryType === "brand" ? "default" : "secondary"
+                    queryData.queryType === "product" ? "default" : "secondary"
                   }
                 >
-                  {queryData.queryType === "brand"
-                    ? "Brand Query"
-                    : "Market Query"}
+                  {queryData.queryType === "product"
+                    ? "Product Query"
+                    : "Sector Query"}
                 </Badge>
                 <Badge variant="outline">{queryData.topic?.name}</Badge>
                 <Badge variant="outline">{queryData.project?.name}</Badge>

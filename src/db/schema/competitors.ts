@@ -24,20 +24,18 @@ export const competitors = pgTable(
       mode: "string",
     }),
   },
-  (table) => ({
-    competitorsProjectNameKey: uniqueIndex(
-      "competitors_project_name_key",
-    ).using(
+  (table) => [
+    uniqueIndex("competitors_project_name_key").using(
       "btree",
-      table.projectId.asc().nullsLast(),
-      table.name.asc().nullsLast(),
+      table.projectId.asc().nullsLast().op("text_ops"),
+      table.name.asc().nullsLast().op("text_ops"),
     ),
-    competitorsProjectIdFkey: foreignKey({
+    foreignKey({
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "competitors_project_id_fkey",
     }),
-  }),
+  ],
 );
 
 export const competitorsRelations = relations(competitors, ({ one, many }) => ({

@@ -1,0 +1,13 @@
+export { usersRelations } from "@/db/schema/auth";
+export { competitorsRelations } from "@/db/schema/competitors";
+export { domainsRelations } from "@/db/schema/domains";
+export { executionsRelations } from "@/db/schema/executions";
+export { mentionsRelations } from "@/db/schema/mentions";
+export { modelsRelations } from "@/db/schema/models";
+export { projectModelsRelations } from "@/db/schema/project_models";
+export { projectsRelations } from "@/db/schema/projects";
+export { projectsUsersRelations } from "@/db/schema/projects_users";
+export { queriesRelations } from "@/db/schema/queries";
+export { queryExecutionsRelations } from "@/db/schema/query_executions";
+export { sourcesRelations } from "@/db/schema/sources";
+export { topicsRelations } from "@/db/schema/topics";

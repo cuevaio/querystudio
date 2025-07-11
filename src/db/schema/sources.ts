@@ -28,42 +28,42 @@ export const sources = pgTable(
     queryType: text("query_type").default("sector"),
     mentions: text().array().default([""]),
   },
-  (table) => ({
-    idxSourcesMentions: index("idx_sources_mentions").using(
+  (table) => [
+    index("idx_sources_mentions").using(
       "gin",
-      table.mentions.asc().nullsLast(),
+      table.mentions.asc().nullsLast().op("array_ops"),
     ),
-    idxSourcesQueryType: index("idx_sources_query_type").using(
+    index("idx_sources_query_type").using(
       "btree",
-      table.queryType.asc().nullsLast(),
+      table.queryType.asc().nullsLast().op("text_ops"),
     ),
-    sourcesExecUrlKey: uniqueIndex("sources_exec_url_key").using(
+    uniqueIndex("sources_exec_url_key").using(
       "btree",
-      table.queryExecutionId.asc().nullsLast(),
-      table.url.asc().nullsLast(),
+      table.queryExecutionId.asc().nullsLast().op("text_ops"),
+      table.url.asc().nullsLast().op("uuid_ops"),
     ),
-    sourcesDomainIdFkey: foreignKey({
+    foreignKey({
       columns: [table.domainId],
       foreignColumns: [domains.id],
       name: "sources_domain_id_fkey",
     }),
-    sourcesModelIdFkey: foreignKey({
+    foreignKey({
       columns: [table.modelId],
       foreignColumns: [models.id],
       name: "sources_model_id_fkey",
     }),
-    sourcesProjectIdFkey: foreignKey({
+    foreignKey({
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "sources_project_id_fkey",
     }),
-    sourcesQueryExecutionIdFkey: foreignKey({
+    foreignKey({
       columns: [table.queryExecutionId],
       foreignColumns: [queryExecutions.id],
       name: "sources_query_execution_id_fkey",
     }),
-    checkQueryType: check("check_query_type", sql`query_type = 'sector'::text`),
-  }),
+    check("check_query_type", sql`query_type = 'sector'::text`),
+  ],
 );
 
 export const sourcesRelations = relations(sources, ({ one, many }) => ({

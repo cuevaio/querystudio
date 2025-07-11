@@ -6,18 +6,17 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/db";
-import { membership, query } from "@/db/schema";
-import { nanoid } from "@/lib/nanoid";
+import { projectsUsers, queries } from "@/db/schema";
 
 // Create Query Action
 export type CreateQueryActionState = {
   input: {
     topicId: string;
-    organizationId: string;
-    content: string;
+    projectId: string;
+    text: string;
   };
   output:
-    | { success: true; data: { id: string; content: string } }
+    | { success: true; data: { id: string; text: string } }
     | { success: false; error?: string };
 };
 
@@ -28,14 +27,14 @@ export async function createQueryAction(
   let slug: string | undefined;
   const raw = {
     topicId: formData.get("topicId") as string,
-    organizationId: formData.get("organizationId") as string,
-    content: formData.get("content") as string,
+    projectId: formData.get("projectId") as string,
+    text: formData.get("text") as string,
   };
 
   const schema = z.object({
     topicId: z.string().min(1, "Topic ID is required"),
-    organizationId: z.string().min(1, "Organization ID is required"),
-    content: z.string().min(1, "Query content is required"),
+    projectId: z.string().min(1, "Project ID is required"),
+    text: z.string().min(1, "Query text is required"),
   });
 
   const parsed = schema.safeParse(raw);
@@ -68,17 +67,17 @@ export async function createQueryAction(
 
     const userId = session.user.id;
 
-    const _membership = await db.query.membership.findFirst({
+    const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
-        eq(membership.userId, userId),
-        eq(membership.organizationId, parsed.data.organizationId),
+        eq(projectsUsers.userId, userId),
+        eq(projectsUsers.projectId, parsed.data.projectId),
       ),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
-    if (!_membership) {
+    if (!_projectUser) {
       state.output = {
         success: false,
         error: "Unauthorized",
@@ -86,22 +85,24 @@ export async function createQueryAction(
       return state;
     }
 
-    const { organization } = _membership;
-    slug = organization.slug;
+    const { project } = _projectUser;
+    slug = project.slug || undefined;
 
-    const queryId = nanoid();
+    const insertedQueries = await db
+      .insert(queries)
+      .values({
+        topicId: parsed.data.topicId,
+        projectId: parsed.data.projectId,
+        text: parsed.data.text,
+        queryType: "sector", // Default to sector query
+      })
+      .returning();
 
-    await db.insert(query).values({
-      id: queryId,
-      topicId: parsed.data.topicId,
-      organizationId: parsed.data.organizationId,
-      content: parsed.data.content,
-      queryType: "market", // Default to market query
-    });
+    const queryId = insertedQueries[0].id;
 
     state.output = {
       success: true,
-      data: { id: queryId, content: parsed.data.content },
+      data: { id: queryId, text: parsed.data.text },
     };
   } catch (err) {
     state.output = {
@@ -121,10 +122,10 @@ export async function createQueryAction(
 export type UpdateQueryActionState = {
   input: {
     queryId: string;
-    content: string;
+    text: string;
   };
   output:
-    | { success: true; data: { id: string; content: string } }
+    | { success: true; data: { id: string; text: string } }
     | { success: false; error?: string };
 };
 
@@ -135,12 +136,12 @@ export async function updateQueryAction(
   let slug: string | undefined;
   const raw = {
     queryId: formData.get("queryId") as string,
-    content: formData.get("content") as string,
+    text: formData.get("text") as string,
   };
 
   const schema = z.object({
     queryId: z.string().min(1, "Query ID is required"),
-    content: z.string().min(1, "Query content is required"),
+    text: z.string().min(1, "Query text is required"),
   });
 
   const parsed = schema.safeParse(raw);
@@ -173,10 +174,10 @@ export async function updateQueryAction(
 
     const userId = session.user.id;
 
-    const _query = await db.query.query.findFirst({
-      where: eq(query.id, parsed.data.queryId),
+    const _query = await db.query.queries.findFirst({
+      where: eq(queries.id, parsed.data.queryId),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
@@ -188,17 +189,17 @@ export async function updateQueryAction(
       return state;
     }
 
-    const _membership = await db.query.membership.findFirst({
+    const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
-        eq(membership.userId, userId),
-        eq(membership.organizationId, _query.organizationId),
+        eq(projectsUsers.userId, userId),
+        eq(projectsUsers.projectId, _query.projectId),
       ),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
-    if (!_membership) {
+    if (!_projectUser) {
       state.output = {
         success: false,
         error: "Unauthorized",
@@ -206,20 +207,19 @@ export async function updateQueryAction(
       return state;
     }
 
-    const { organization } = _query;
-    slug = organization.slug;
+    const { project } = _query;
+    slug = project?.slug || undefined;
 
     await db
-      .update(query)
+      .update(queries)
       .set({
-        content: parsed.data.content,
-        updatedAt: new Date(),
+        text: parsed.data.text,
       })
-      .where(eq(query.id, parsed.data.queryId));
+      .where(eq(queries.id, parsed.data.queryId));
 
     state.output = {
       success: true,
-      data: { id: parsed.data.queryId, content: parsed.data.content },
+      data: { id: parsed.data.queryId, text: parsed.data.text },
     };
   } catch (err) {
     state.output = {
@@ -229,7 +229,7 @@ export async function updateQueryAction(
   }
 
   if (slug) {
-    revalidatePath(`/$slug}`);
+    revalidatePath(`/${slug}`);
   }
 
   return state;
@@ -288,10 +288,10 @@ export async function deleteQueryAction(
 
     const userId = session.user.id;
 
-    const _query = await db.query.query.findFirst({
-      where: eq(query.id, parsed.data.queryId),
+    const _query = await db.query.queries.findFirst({
+      where: eq(queries.id, parsed.data.queryId),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
@@ -303,17 +303,17 @@ export async function deleteQueryAction(
       return state;
     }
 
-    const _membership = await db.query.membership.findFirst({
+    const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
-        eq(membership.userId, userId),
-        eq(membership.organizationId, _query.organizationId),
+        eq(projectsUsers.userId, userId),
+        eq(projectsUsers.projectId, _query.projectId),
       ),
       with: {
-        organization: true,
+        project: true,
       },
     });
 
-    if (!_membership) {
+    if (!_projectUser) {
       state.output = {
         success: false,
         error: "Unauthorized",
@@ -321,10 +321,10 @@ export async function deleteQueryAction(
       return state;
     }
 
-    const { organization } = _query;
-    slug = organization.slug;
+    const { project } = _query;
+    slug = project?.slug || undefined;
 
-    await db.delete(query).where(eq(query.id, parsed.data.queryId));
+    await db.delete(queries).where(eq(queries.id, parsed.data.queryId));
 
     state.output = {
       success: true,

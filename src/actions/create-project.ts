@@ -2,7 +2,9 @@
 
 import { tasks } from "@trigger.dev/sdk/v3";
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { db } from "@/db";
 import {
   projects,
@@ -84,20 +86,19 @@ export async function createProject(
   }
 
   try {
-    // Get authenticated user
-    // const session = await auth.api.getSession({
-    //   headers: await headers(),
-    // });
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-    // if (!session?.user?.id) {
-    //   state.output = {
-    //     success: false,
-    //     error: "You must be authenticated to create a project",
-    //   };
-    //   return state;
-    // }
+    if (!session?.user?.id) {
+      state.output = {
+        success: false,
+        error: "You must be authenticated to create a project",
+      };
+      return state;
+    }
 
-    const userId = "466d24ca-2936-4bba-9e1d-99badb2aa952";
+    const userId = session.user.id;
 
     let slug = slugify(parsed.data.name);
 
@@ -139,7 +140,7 @@ export async function createProject(
         projectId,
         queries: topicItem.queries.map((queryItem) => ({
           text: queryItem.query,
-          queryType: queryItem.companySpecific ? "brand" : "market",
+          queryType: queryItem.companySpecific ? "product" : "sector",
           projectId,
         })),
       };
@@ -168,7 +169,7 @@ export async function createProject(
       for (const queryItem of topicItem.queries) {
         queriesData.push({
           text: queryItem.text,
-          queryType: queryItem.queryType,
+          queryType: queryItem.queryType as "sector" | "product",
           topicId: insertedTopic.id,
           projectId,
         } satisfies QueryInsert);

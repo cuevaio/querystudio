@@ -1,7 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,18 +20,16 @@ interface TopicPageProps {
 export default async function TopicPage({ params }: TopicPageProps) {
   const { organization_slug, topic_id } = await params;
 
-  // Get authenticated user
-  // const session = await auth.api.getSession({
-  //   headers: await headers(),
-  // });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-  // if (!session?.user?.id) {
-  //   redirect("/signin");
-  // }
+  if (!session?.user?.id) {
+    redirect("/signin");
+  }
 
-  const userId = "466d24ca-2936-4bba-9e1d-99badb2aa952";
+  const userId = session.user.id;
 
-  // Get topic with queries and organization
   const topicData = await db.query.topics.findFirst({
     where: and(eq(topics.id, topic_id)),
     with: {
@@ -118,15 +118,15 @@ export default async function TopicPage({ params }: TopicPageProps) {
                         <div className="ml-4 flex items-center gap-2">
                           <Badge
                             variant={
-                              queryItem.queryType === "brand"
+                              queryItem.queryType === "product"
                                 ? "default"
                                 : "secondary"
                             }
                             className="text-xs"
                           >
-                            {queryItem.queryType === "brand"
-                              ? "Brand"
-                              : "Market"}
+                            {queryItem.queryType === "product"
+                              ? "Product"
+                              : "Sector"}
                           </Badge>
                           <Badge variant="outline" className="text-xs">
                             #{index + 1}
@@ -161,19 +161,19 @@ export default async function TopicPage({ params }: TopicPageProps) {
                 </span>
               </div>
               <div>
-                <span className="font-medium">Brand Queries:</span>
+                <span className="font-medium">Product Queries:</span>
                 <span className="ml-2 text-muted-foreground">
                   {
-                    topicData.queries.filter((q) => q.queryType === "brand")
+                    topicData.queries.filter((q) => q.queryType === "product")
                       .length
                   }
                 </span>
               </div>
               <div>
-                <span className="font-medium">Market Queries:</span>
+                <span className="font-medium">Sector Queries:</span>
                 <span className="ml-2 text-muted-foreground">
                   {
-                    topicData.queries.filter((q) => q.queryType === "market")
+                    topicData.queries.filter((q) => q.queryType === "sector")
                       .length
                   }
                 </span>
