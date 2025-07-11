@@ -1,39 +1,29 @@
 import { relations } from "drizzle-orm";
-import {
-  boolean,
-  pgTable,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/pg-core";
-import { organization } from "./organization";
-import { query } from "./query";
+import { foreignKey, pgTable, text, uuid } from "drizzle-orm/pg-core";
+import { projects } from "./projects";
+import { queries } from "./queries";
 
-export const topic = pgTable("topic", {
-  id: varchar("id", { length: 12 }).primaryKey(),
-  organizationId: varchar("organization_id", { length: 12 })
-    .references(() => organization.id, { onDelete: "cascade" })
-    .notNull(),
+export const topics = pgTable(
+  "topics",
+  {
+    id: uuid().defaultRandom().primaryKey().notNull(),
+    projectId: uuid("project_id"),
+    name: text().notNull(),
+    description: text(),
+  },
+  (table) => ({
+    topicsProjectIdFkey: foreignKey({
+      columns: [table.projectId],
+      foreignColumns: [projects.id],
+      name: "topics_project_id_fkey",
+    }),
+  }),
+);
 
-  name: text("name").notNull(),
-  description: text("description").notNull(),
-
-  isActive: boolean("is_active").notNull().default(true),
-
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => /* @__PURE__ */ new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => /* @__PURE__ */ new Date())
-    .notNull(),
-});
-
-export const topicRelations = relations(topic, ({ many, one }) => ({
-  queries: many(query),
-  organization: one(organization, {
-    fields: [topic.organizationId],
-    references: [organization.id],
+export const topicsRelations = relations(topics, ({ one, many }) => ({
+  queries: many(queries),
+  project: one(projects, {
+    fields: [topics.projectId],
+    references: [projects.id],
   }),
 }));
-
-export type TopicInsert = typeof topic.$inferInsert;

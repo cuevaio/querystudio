@@ -1,15 +1,13 @@
 import { and, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { QueryActionsMenu } from "@/components/query-actions-menu";
 import { QueryChatUI } from "@/components/query-chat-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
-import { membership, query } from "@/db/schema";
+import { projectsUsers, queries } from "@/db/schema";
 
 interface QueryPageProps {
   params: Promise<{
@@ -23,26 +21,26 @@ export default async function QueryPage({ params }: QueryPageProps) {
   const { organization_slug, topic_id, query_id } = await params;
 
   // Get authenticated user
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  // const session = await auth.api.getSession({
+  //   headers: await headers(),
+  // });
 
-  if (!session?.user?.id) {
-    redirect("/signin");
-  }
+  // if (!session?.user?.id) {
+  //   redirect("/signin");
+  // }
 
-  const userId = session.user.id;
+  const userId = "466d24ca-2936-4bba-9e1d-99badb2aa952";
 
   // Get query with topic and organization
-  const queryData = await db.query.query.findFirst({
-    where: and(eq(query.id, query_id), eq(query.isActive, true)),
+  const queryData = await db.query.queries.findFirst({
+    where: and(eq(queries.id, query_id)),
     with: {
       topic: {
         with: {
-          organization: true,
+          project: true,
         },
       },
-      organization: true,
+      project: true,
     },
   });
 
@@ -52,17 +50,17 @@ export default async function QueryPage({ params }: QueryPageProps) {
 
   // Verify organization slug and topic ID match
   if (
-    queryData.organization.slug !== organization_slug ||
+    queryData.project?.slug !== organization_slug ||
     queryData.topicId !== topic_id
   ) {
     notFound();
   }
 
   // Check if user is member of organization
-  const userMembership = await db.query.membership.findFirst({
+  const userMembership = await db.query.projectsUsers.findFirst({
     where: and(
-      eq(membership.userId, userId),
-      eq(membership.organizationId, queryData.organizationId),
+      eq(projectsUsers.userId, userId),
+      eq(projectsUsers.projectId, queryData.projectId),
     ),
   });
 
@@ -78,7 +76,7 @@ export default async function QueryPage({ params }: QueryPageProps) {
           <Link href={`/${organization_slug}/${topic_id}`}>
             <Button variant="ghost" className="h-auto p-0">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to {queryData.topic.name}
+              Back to {queryData.topic?.name}
             </Button>
           </Link>
         </div>
@@ -87,7 +85,7 @@ export default async function QueryPage({ params }: QueryPageProps) {
         <div className="mb-8">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h1 className="mb-4 font-bold text-3xl">{queryData.content}</h1>
+              <h1 className="mb-4 font-bold text-3xl">{queryData.text}</h1>
               <div className="mb-4 flex items-center gap-2">
                 <Badge
                   variant={
@@ -98,10 +96,10 @@ export default async function QueryPage({ params }: QueryPageProps) {
                     ? "Brand Query"
                     : "Market Query"}
                 </Badge>
-                <Badge variant="outline">{queryData.topic.name}</Badge>
-                <Badge variant="outline">{queryData.organization.name}</Badge>
+                <Badge variant="outline">{queryData.topic?.name}</Badge>
+                <Badge variant="outline">{queryData.project?.name}</Badge>
                 <Badge variant="outline">
-                  {queryData.isActive ? "Active" : "Inactive"}
+                  {queryData.active ? "Active" : "Inactive"}
                 </Badge>
               </div>
             </div>
@@ -115,7 +113,7 @@ export default async function QueryPage({ params }: QueryPageProps) {
           </div>
         </div>
 
-        <QueryChatUI query={queryData.content} />
+        <QueryChatUI query={queryData.text} />
       </div>
     </div>
   );

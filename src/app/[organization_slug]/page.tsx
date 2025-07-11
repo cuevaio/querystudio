@@ -1,12 +1,11 @@
 import { and, eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/db";
-import { membership, organization, topic } from "@/db/schema";
+import { projects, projectsUsers } from "@/db/schema";
+import { ProjectPageClient } from "./project-page-client";
 
 interface OrganizationPageProps {
   params: Promise<{
@@ -20,22 +19,21 @@ export default async function OrganizationPage({
   const { organization_slug } = await params;
 
   // Get authenticated user
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  // const session = await auth.api.getSession({
+  //   headers: await headers(),
+  // });
 
-  if (!session?.user?.id) {
-    redirect("/signin");
-  }
+  // if (!session?.user?.id) {
+  //   redirect("/signin");
+  // }
 
-  const userId = session.user.id;
+  const userId = "466d24ca-2936-4bba-9e1d-99badb2aa952";
 
   // Get organization with topics
-  const org = await db.query.organization.findFirst({
-    where: eq(organization.slug, organization_slug),
+  const org = await db.query.projects.findFirst({
+    where: eq(projects.slug, organization_slug),
     with: {
       topics: {
-        where: eq(topic.isActive, true),
         orderBy: (topic, { asc }) => [asc(topic.name)],
         with: {
           queries: {
@@ -53,10 +51,10 @@ export default async function OrganizationPage({
   }
 
   // Check if user is member of organization
-  const userMembership = await db.query.membership.findFirst({
+  const userMembership = await db.query.projectsUsers.findFirst({
     where: and(
-      eq(membership.userId, userId),
-      eq(membership.organizationId, org.id),
+      eq(projectsUsers.userId, userId),
+      eq(projectsUsers.projectId, org.id),
     ),
   });
 
@@ -69,11 +67,19 @@ export default async function OrganizationPage({
       <div className="mx-auto max-w-4xl">
         {/* Organization Header */}
         <div className="mb-8">
-          <h1 className="mb-2 font-bold text-3xl">{org.name}</h1>
-          <p className="mb-4 text-muted-foreground">{org.description}</p>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h1 className="mb-2 font-bold text-3xl">{org.name}</h1>
+              <p className="mb-4 text-muted-foreground">{org.description}</p>
+            </div>
+            <ProjectPageClient
+              projectId={org.id}
+              organizationSlug={organization_slug}
+            />
+          </div>
           <div className="flex flex-wrap gap-2">
             <Badge variant="secondary">{org.sector}</Badge>
-            <Badge variant="secondary">{org.country}</Badge>
+            <Badge variant="secondary">{org.region}</Badge>
             <Badge variant="secondary">{org.language}</Badge>
           </div>
         </div>

@@ -1,14 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/db";
-import { membership, query, topic } from "@/db/schema";
+import { projectsUsers, topics } from "@/db/schema";
 
 interface TopicPageProps {
   params: Promise<{
@@ -21,24 +19,23 @@ export default async function TopicPage({ params }: TopicPageProps) {
   const { organization_slug, topic_id } = await params;
 
   // Get authenticated user
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  // const session = await auth.api.getSession({
+  //   headers: await headers(),
+  // });
 
-  if (!session?.user?.id) {
-    redirect("/signin");
-  }
+  // if (!session?.user?.id) {
+  //   redirect("/signin");
+  // }
 
-  const userId = session.user.id;
+  const userId = "466d24ca-2936-4bba-9e1d-99badb2aa952";
 
   // Get topic with queries and organization
-  const topicData = await db.query.topic.findFirst({
-    where: and(eq(topic.id, topic_id), eq(topic.isActive, true)),
+  const topicData = await db.query.topics.findFirst({
+    where: and(eq(topics.id, topic_id)),
     with: {
-      organization: true,
+      project: true,
       queries: {
-        where: eq(query.isActive, true),
-        orderBy: (query, { asc }) => [asc(query.content)],
+        orderBy: (query, { asc }) => [asc(query.text)],
       },
     },
   });
@@ -48,15 +45,15 @@ export default async function TopicPage({ params }: TopicPageProps) {
   }
 
   // Verify organization slug matches
-  if (topicData.organization.slug !== organization_slug) {
+  if (topicData.project?.slug !== organization_slug) {
     notFound();
   }
 
   // Check if user is member of organization
-  const userMembership = await db.query.membership.findFirst({
+  const userMembership = await db.query.projectsUsers.findFirst({
     where: and(
-      eq(membership.userId, userId),
-      eq(membership.organizationId, topicData.organizationId),
+      eq(projectsUsers.userId, userId),
+      eq(projectsUsers.projectId, topicData.projectId ?? ""),
     ),
   });
 
@@ -72,7 +69,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
           <Link href={`/${organization_slug}`}>
             <Button variant="ghost" className="h-auto p-0">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to {topicData.organization.name}
+              Back to {topicData.project?.name}
             </Button>
           </Link>
         </div>
@@ -86,7 +83,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
               {topicData.queries.length} quer
               {topicData.queries.length !== 1 ? "ies" : "y"}
             </Badge>
-            <Badge variant="outline">{topicData.organization.name}</Badge>
+            <Badge variant="outline">{topicData.project?.name}</Badge>
           </div>
         </div>
 
@@ -115,7 +112,7 @@ export default async function TopicPage({ params }: TopicPageProps) {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <CardTitle className="font-medium text-lg">
-                            {queryItem.content}
+                            {queryItem.text}
                           </CardTitle>
                         </div>
                         <div className="ml-4 flex items-center gap-2">

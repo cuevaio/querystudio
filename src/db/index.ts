@@ -1,5 +1,5 @@
-import { type NeonQueryFunction, neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 
 import * as schema from "@/db/schema";
 
@@ -8,13 +8,13 @@ if (!process.env.DATABASE_URL) {
 }
 
 declare global {
-  var sql: NeonQueryFunction<false, false> | undefined;
+  var sql: ReturnType<typeof postgres> | undefined;
   var db: ReturnType<typeof drizzle<typeof schema>> | undefined;
 }
 
 if (!global.db) {
   if (!global.sql) {
-    global.sql = neon(process.env.DATABASE_URL);
+    global.sql = postgres(process.env.DATABASE_URL);
   }
 
   global.db = drizzle({

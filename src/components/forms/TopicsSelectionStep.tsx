@@ -5,7 +5,7 @@ import { Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "sonner";
-import { createOrganization } from "@/actions/create-organization";
+import { createProject } from "@/actions/create-project";
 import {
   Accordion,
   AccordionContent,
@@ -82,21 +82,18 @@ export function TopicsSelectionStep() {
     },
   });
 
-  const [state, formAction, isPending] = React.useActionState(
-    createOrganization,
-    {
-      input: {
-        name: "",
-        websiteUrl: "",
-        sector: "",
-        country: "",
-        language: "",
-        description: "",
-        topics: "",
-      },
-      output: { success: false },
+  const [state, formAction, isPending] = React.useActionState(createProject, {
+    input: {
+      name: "",
+      websiteUrl: "",
+      sector: "",
+      country: "",
+      language: "",
+      description: "",
+      topics: "",
     },
-  );
+    output: { success: false },
+  });
 
   // Check if we have all required data for API call
   const hasRequiredData = React.useMemo(() => {
@@ -163,7 +160,7 @@ export function TopicsSelectionStep() {
         router.push(url);
       }, 100);
 
-      toast.success("Organization created successfully!");
+      toast.success("Project created successfully!");
     } else if (state.output.error) {
       toast.error(state.output.error);
     }
@@ -408,7 +405,7 @@ export function TopicsSelectionStep() {
         >
           {isPending
             ? "Creating..."
-            : `Create Profile (${selectedTopics.length} selected)`}
+            : `Create Project (${selectedTopics.length} selected)`}
         </Button>
       </div>
     </form>

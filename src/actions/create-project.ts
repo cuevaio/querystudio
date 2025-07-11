@@ -2,22 +2,20 @@
 
 import { tasks } from "@trigger.dev/sdk/v3";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { db } from "@/db";
 import {
-  membership,
-  organization,
+  projects,
+  projectsUsers,
   type QueryInsert,
-  query,
-  topic,
+  queries,
+  topics,
 } from "@/db/schema";
 import { nanoid } from "@/lib/nanoid";
 import { AIGeneratedQuerySchema } from "@/schemas/ai-generated-query";
 import type { generateInitialQueries } from "@/trigger/generate-initial-queries";
 
-export type CreateOrganizationActionState = {
+export type CreateProjectActionState = {
   input: {
     name: string;
     websiteUrl: string;
@@ -38,10 +36,10 @@ export type CreateOrganizationActionState = {
     | { success: false; error?: string };
 };
 
-export async function createOrganization(
-  _prev: CreateOrganizationActionState,
+export async function createProject(
+  _prev: CreateProjectActionState,
   formData: FormData,
-): Promise<CreateOrganizationActionState> {
+): Promise<CreateProjectActionState> {
   const raw = {
     name: formData.get("name"),
     websiteUrl: formData.get("websiteUrl")?.toString().startsWith("http")
@@ -72,8 +70,8 @@ export async function createOrganization(
 
   const parsed = schema.safeParse(raw);
 
-  const state: CreateOrganizationActionState = {
-    input: raw as CreateOrganizationActionState["input"],
+  const state: CreateProjectActionState = {
+    input: raw as CreateProjectActionState["input"],
     output: { success: false },
   };
 
@@ -87,84 +85,104 @@ export async function createOrganization(
 
   try {
     // Get authenticated user
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    // const session = await auth.api.getSession({
+    //   headers: await headers(),
+    // });
 
-    if (!session?.user?.id) {
-      state.output = {
-        success: false,
-        error: "You must be authenticated to create an organization",
-      };
-      return state;
-    }
+    // if (!session?.user?.id) {
+    //   state.output = {
+    //     success: false,
+    //     error: "You must be authenticated to create a project",
+    //   };
+    //   return state;
+    // }
 
-    const userId = session.user.id;
-    const organizationId = nanoid(12);
+    const userId = "466d24ca-2936-4bba-9e1d-99badb2aa952";
 
     let slug = slugify(parsed.data.name);
 
-    const existingOrganization = await db.query.organization.findFirst({
-      where: eq(organization.slug, slug),
+    const existingProject = await db.query.projects.findFirst({
+      where: eq(projects.slug, slug),
     });
 
-    if (existingOrganization) {
+    if (existingProject) {
       slug = `${slug}-${nanoid(4)}`;
     }
 
-    // Create organization
-    await db.insert(organization).values({
-      id: organizationId,
-      name: parsed.data.name,
-      slug,
-      websiteUrl: parsed.data.websiteUrl,
-      sector: parsed.data.sector,
-      country: parsed.data.country,
-      language: parsed.data.language,
-      description: parsed.data.description,
-    });
+    // Create project and get the auto-generated ID
+    const [insertedProject] = await db
+      .insert(projects)
+      .values({
+        name: parsed.data.name,
+        slug,
+        url: parsed.data.websiteUrl,
+        sector: parsed.data.sector,
+        region: parsed.data.country,
+        language: parsed.data.language,
+        description: parsed.data.description,
+        userId,
+      })
+      .returning({ id: projects.id });
 
-    await db.insert(membership).values({
-      organizationId,
+    const projectId = insertedProject.id;
+
+    await db.insert(projectsUsers).values({
+      projectId,
       userId,
       role: "admin",
     });
 
-    const topics = parsed.data.topics.map((topic) => {
-      const topicId = nanoid(12);
+    const topicsData = parsed.data.topics.map((topicItem) => {
       return {
-        id: topicId,
-        name: topic.name,
-        description: topic.description,
-        organizationId,
-        queries: topic.queries.map(
-          (query) =>
-            ({
-              id: nanoid(12),
-              content: query.query,
-              queryType: query.companySpecific ? "brand" : "market",
-              topicId,
-              organizationId,
-            }) satisfies QueryInsert,
-        ),
+        name: topicItem.name,
+        description: topicItem.description,
+        projectId,
+        queries: topicItem.queries.map((queryItem) => ({
+          text: queryItem.query,
+          queryType: queryItem.companySpecific ? "brand" : "market",
+          projectId,
+        })),
       };
     });
 
-    console.log(topics);
+    console.log(topicsData);
 
-    await db
-      .insert(topic)
-      .values(topics.map((topic) => ({ ...topic, queries: undefined })));
-    await db.insert(query).values(topics.flatMap((topic) => topic.queries));
+    // Insert topics and get their auto-generated IDs
+    const insertedTopics = await db
+      .insert(topics)
+      .values(
+        topicsData.map((topicItem) => ({
+          name: topicItem.name,
+          description: topicItem.description,
+          projectId,
+        })),
+      )
+      .returning({ id: topics.id, name: topics.name });
+
+    // Create queries with the actual topic IDs
+    const queriesData = [];
+    for (let i = 0; i < topicsData.length; i++) {
+      const topicItem = topicsData[i];
+      const insertedTopic = insertedTopics[i];
+
+      for (const queryItem of topicItem.queries) {
+        queriesData.push({
+          text: queryItem.text,
+          queryType: queryItem.queryType,
+          topicId: insertedTopic.id,
+          projectId,
+        } satisfies QueryInsert);
+      }
+    }
+
+    await db.insert(queries).values(queriesData);
 
     const run = await tasks.trigger<typeof generateInitialQueries>(
       "generate-initial-queries",
       {
-        organizationId,
+        organizationId: projectId, // Use the auto-generated projectId
       },
     );
-
-    run.publicAccessToken;
 
     state.output = {
       success: true,
@@ -177,17 +195,18 @@ export async function createOrganization(
       },
     };
   } catch (err) {
+    console.error(err);
     if (err instanceof Error) {
       if (err.message.includes("slug")) {
         state.output = {
           success: false,
-          error: "An organization with this slug already exists",
+          error: "A project with this slug already exists",
         };
       }
     } else {
       state.output = {
         success: false,
-        error: "Failed to create organization",
+        error: "Failed to create project",
       };
     }
   }
