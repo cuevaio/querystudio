@@ -151,10 +151,19 @@ export function TopicsSelectionStep() {
   // Handle form submission feedback
   React.useEffect(() => {
     if (state.output.success) {
+      const successOutput = state.output as {
+        success: true;
+        data: { slug: string; run: { id: string; publicAccessToken: string } };
+      };
+
+      // Use setTimeout to ensure navigation happens after form submission completes
+      setTimeout(() => {
+        const url = `/${successOutput.data.slug}/seed?runId=${successOutput.data.run.id}&publicAccessToken=${successOutput.data.run.publicAccessToken}`;
+        console.log("Navigating to:", url);
+        router.push(url);
+      }, 100);
+
       toast.success("Organization created successfully!");
-      router.push(
-        `/${state.output.data.slug}/seed?runId=${state.output.data.run.id}&publicAccessToken=${state.output.data.run.publicAccessToken}`,
-      );
     } else if (state.output.error) {
       toast.error(state.output.error);
     }
