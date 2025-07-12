@@ -188,10 +188,20 @@ export async function updateTopicAction(
       return state;
     }
 
+    if (!_topic.project) {
+      state.output = {
+        success: false,
+        error: "Project not found",
+      };
+      return state;
+    }
+
+    const projectId = _topic.project.id;
+
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),
-        eq(projectsUsers.projectId, _topic.projectId!),
+        eq(projectsUsers.projectId, projectId),
       ),
       with: {
         project: true,
@@ -302,10 +312,20 @@ export async function deleteTopicAction(
       return state;
     }
 
+    if (!_topic.project) {
+      state.output = {
+        success: false,
+        error: "Project not found",
+      };
+      return state;
+    }
+
+    const projectId = _topic.project.id;
+
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),
-        eq(projectsUsers.projectId, _topic.projectId!),
+        eq(projectsUsers.projectId, projectId),
       ),
       with: {
         project: true,

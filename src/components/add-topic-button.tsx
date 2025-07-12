@@ -6,12 +6,12 @@ import { createTopicAction } from "@/actions/topic-actions";
 import { Button } from "./ui/button";
 
 interface AddTopicButtonProps {
-  organizationId: string;
+  projectId: string;
   onTopicAdded: (newTopic: {
     id: string;
     name: string;
     description: string;
-    organizationId: string;
+    projectId: string;
     queries: any[];
   }) => void;
 }
@@ -40,13 +40,13 @@ const randomTopicNames = [
 ];
 
 export function AddTopicButton({
-  organizationId,
+  projectId,
   onTopicAdded,
 }: AddTopicButtonProps) {
   const [createState, createAction, isPending] = useActionState(
     createTopicAction,
     {
-      input: { organizationId: "", name: "", description: "" },
+      input: { projectId: "", name: "", description: "" },
       output: { success: false },
     },
   );
@@ -58,11 +58,11 @@ export function AddTopicButton({
         id: topicId,
         name: createState.output.data.name,
         description: `Questions and information about ${createState.output.data.name.toLowerCase()}`,
-        organizationId,
+        projectId,
         queries: [],
       });
     }
-  }, [createState.output, onTopicAdded, organizationId]);
+  }, [createState.output, onTopicAdded, projectId]);
 
   const randomName = React.useMemo(() => {
     console.log(createState);
@@ -74,7 +74,7 @@ export function AddTopicButton({
 
   return (
     <form action={createAction}>
-      <input type="hidden" name="organizationId" value={organizationId} />
+      <input type="hidden" name="projectId" value={projectId} />
       <input type="hidden" name="name" defaultValue={randomName} />
       <input
         type="hidden"

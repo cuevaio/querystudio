@@ -52,6 +52,30 @@ export async function createQueryAction(
     return state;
   }
 
+  if (!parsed.data.projectId) {
+    state.output = {
+      success: false,
+      error: "Project ID is required",
+    };
+    return state;
+  }
+
+  if (!parsed.data.topicId) {
+    state.output = {
+      success: false,
+      error: "Topic ID is required",
+    };
+    return state;
+  }
+
+  if (!parsed.data.text) {
+    state.output = {
+      success: false,
+      error: "Query text is required",
+    };
+    return state;
+  }
+
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -207,8 +231,15 @@ export async function updateQueryAction(
       return state;
     }
 
-    const { project } = _query;
-    slug = project?.slug || undefined;
+    if (!_query.project) {
+      state.output = {
+        success: false,
+        error: "Project not found",
+      };
+      return state;
+    }
+
+    slug = _query.project?.slug || undefined;
 
     await db
       .update(queries)
@@ -303,10 +334,19 @@ export async function deleteQueryAction(
       return state;
     }
 
+    if (!_query.project) {
+      state.output = {
+        success: false,
+        error: "Project not found",
+      };
+      return state;
+    }
+
+    const projectId = _query.project.id;
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),
-        eq(projectsUsers.projectId, _query.projectId),
+        eq(projectsUsers.projectId, projectId),
       ),
       with: {
         project: true,

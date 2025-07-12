@@ -13,7 +13,7 @@ interface QueryItemProps {
     id: string;
     content: string;
     topicId: string;
-    organizationId: string;
+    projectId: string;
   };
   onQueryDeleted: (topicId: string, queryId: string) => void;
   onQueryUpdated: (

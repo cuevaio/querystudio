@@ -26,12 +26,12 @@ interface TopicCardProps {
     id: string;
     name: string;
     description: string;
-    organizationId: string;
+    projectId: string;
     queries: Array<{
       id: string;
       content: string;
       topicId: string;
-      organizationId: string;
+      projectId: string;
     }>;
   };
   onTopicUpdated: (topicId: string, newName: string) => void;
@@ -41,7 +41,7 @@ interface TopicCardProps {
     id: string;
     content: string;
     topicId: string;
-    organizationId: string;
+    projectId: string;
   }) => void;
   onQueryUpdated: (
     topicId: string,
@@ -213,7 +213,7 @@ export function TopicCard({
           ))}
           <AddQueryButton
             topicId={topic.id}
-            organizationId={topic.organizationId}
+            projectId={topic.projectId}
             onQueryAdded={onQueryAdded}
           />
         </div>

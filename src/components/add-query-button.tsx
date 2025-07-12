@@ -9,18 +9,18 @@ import { Input } from "@/components/ui/input";
 
 interface AddQueryButtonProps {
   topicId: string;
-  organizationId: string;
+  projectId: string;
   onQueryAdded: (newQuery: {
     id: string;
     content: string;
     topicId: string;
-    organizationId: string;
+    projectId: string;
   }) => void;
 }
 
 export function AddQueryButton({
   topicId,
-  organizationId,
+  projectId,
   onQueryAdded,
 }: AddQueryButtonProps) {
   const [isAdding, setIsAdding] = useState(false);
@@ -28,7 +28,7 @@ export function AddQueryButton({
   const [isPending, startTransition] = useTransition();
 
   const [createState, createAction] = useActionState(createQueryAction, {
-    input: { topicId: "", organizationId: "", content: "" },
+    input: { topicId: "", projectId: "", content: "" },
     output: { success: false },
   });
 
@@ -42,7 +42,7 @@ export function AddQueryButton({
       startTransition(() => {
         const formData = new FormData();
         formData.append("topicId", topicId);
-        formData.append("organizationId", organizationId);
+        formData.append("projectId", projectId);
         formData.append("content", inputValue.trim());
         createAction(formData);
       });
@@ -69,13 +69,13 @@ export function AddQueryButton({
         id: createState.output.data.id,
         content: createState.output.data.content,
         topicId,
-        organizationId,
+        projectId,
       });
       toast.success("Query added");
     } else if (createState.output.error) {
       toast.error(createState.output.error);
     }
-  }, [createState.output, onQueryAdded, topicId, organizationId]);
+  }, [createState.output, onQueryAdded, topicId, projectId]);
 
   return (
     <div className="flex items-center gap-2 rounded-lg bg-muted/20 p-2 transition-colors hover:bg-muted/30">

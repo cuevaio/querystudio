@@ -4,8 +4,8 @@ import React from "react";
 import { AddTopicButton } from "@/components/add-topic-button";
 import { TopicAccordion } from "@/components/topic-accordion";
 
-interface OrganizationTopicsProps {
-  organization: {
+interface ProjectTopicsProps {
+  project: {
     id: string;
     name: string;
     slug: string;
@@ -13,31 +13,31 @@ interface OrganizationTopicsProps {
       id: string;
       name: string;
       description: string;
-      organizationId: string;
+      projectId: string;
       queries: Array<{
         id: string;
         content: string;
         topicId: string;
-        organizationId: string;
+        projectId: string;
       }>;
     }>;
   };
 }
 
-export function OrganizationTopics({ organization }: OrganizationTopicsProps) {
-  const [topics, setTopics] = React.useState(organization.topics);
+export function ProjectTopics({ project }: ProjectTopicsProps) {
+  const [topics, setTopics] = React.useState(project.topics);
 
   const handleTopicAdded = React.useCallback(
     (newTopic: {
       id: string;
       name: string;
       description: string;
-      organizationId: string;
+      projectId: string;
       queries: {
         id: string;
         content: string;
         topicId: string;
-        organizationId: string;
+        projectId: string;
       }[];
     }) => {
       setTopics((prevTopics) =>
@@ -75,7 +75,7 @@ export function OrganizationTopics({ organization }: OrganizationTopicsProps) {
       id: string;
       content: string;
       topicId: string;
-      organizationId: string;
+      projectId: string;
     }) => {
       setTopics((prevTopics) =>
         prevTopics.map((topic) =>
@@ -142,17 +142,17 @@ export function OrganizationTopics({ organization }: OrganizationTopicsProps) {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="font-semibold text-2xl tracking-tight">
-          {organization.name}
+          {project.name}
         </h1>
         <p className="text-muted-foreground">
-          Manage topics and queries for your organization
+          Manage topics and queries for your project
         </p>
       </div>
 
       {/* Add Topic Button */}
       <div className="flex justify-start">
         <AddTopicButton
-          organizationId={organization.id}
+          projectId={project.id}
           onTopicAdded={handleTopicAdded}
         />
       </div>

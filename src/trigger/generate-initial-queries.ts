@@ -3,7 +3,7 @@ import { logger, schemaTask } from "@trigger.dev/sdk/v3";
 import { generateText, Output } from "ai";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, organization, type QueryInsert, query, topic } from "@/db";
+import { db, projects, type QueryInsert, queries, topics } from "@/db";
 import { nanoid } from "@/lib/nanoid";
 import { decodeUnicodeEscapes } from "@/lib/utils";
 import { GENERATE_TOPIC_QUERIES_PROMPT } from "@/prompts/generate-topic-queries";
@@ -17,8 +17,8 @@ export const generateInitialQueries = schemaTask({
   run: async (payload) => {
     const { organizationId } = payload;
 
-    const org = await db.query.organization.findFirst({
-      where: eq(organization.id, organizationId),
+    const org = await db.query.projects.findFirst({
+      where: eq(projects.id, organizationId),
       with: {
         topics: {
           columns: {
@@ -65,10 +65,10 @@ export const generateQueriesForTopic = schemaTask({
     const { topicId } = payload;
 
     // Get the topic with its organization and existing queries
-    const topicData = await db.query.topic.findFirst({
-      where: eq(topic.id, topicId),
+    const topicData = await db.query.topics.findFirst({
+      where: eq(topics.id, topicId),
       with: {
-        organization: true,
+        project: true,
         queries: true,
       },
     });
@@ -77,9 +77,13 @@ export const generateQueriesForTopic = schemaTask({
       throw new Error("Topic not found");
     }
 
-    const organizationId = topicData.organizationId;
+    if (!topicData.project) {
+      throw new Error("Project not found");
+    }
 
-    const existingQueries = topicData.queries.map((q) => q.content);
+    const projectId = topicData.project.id;
+
+    const existingQueries = topicData.queries.map((q) => q.text);
 
     const { text } = await generateText({
       tools: {
@@ -96,12 +100,12 @@ export const generateQueriesForTopic = schemaTask({
           content: `Generate 10 additional queries for the following topic and company:
 
           Company Details:
-          Name: ${topicData.organization.name}
-          Website: ${topicData.organization.websiteUrl}
-          Country: ${topicData.organization.country}
-          Language: ${topicData.organization.language}
-          Sector: ${topicData.organization.sector}
-          Description: ${topicData.organization.description}
+          Name: ${topicData.project.name}
+          Website: ${topicData.project.url}
+          Country: ${topicData.project.region}
+          Language: ${topicData.project.language}
+          Sector: ${topicData.project.sector}
+          Description: ${topicData.project?.description}
           
           Topic Details:
           Name: ${topicData.name}
@@ -145,16 +149,16 @@ export const generateQueriesForTopic = schemaTask({
     console.log("final data", data);
 
     // Insert the new queries into the database
-    await db.insert(query).values(
+    await db.insert(queries).values(
       data.map(
         (queryData) =>
           ({
             id: nanoid(),
             topicId,
-            organizationId,
-            content: queryData.query,
+            projectId,
+            text: queryData.query,
             queryType: queryData.companySpecific ? "brand" : "market",
-            isActive: true,
+            active: true,
           }) satisfies QueryInsert,
       ),
     );
