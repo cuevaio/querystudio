@@ -44,7 +44,7 @@ export function QueryActionsMenu({
   const router = useRouter();
 
   const [updateState, updateAction] = useActionState(updateQueryAction, {
-    input: { queryId: "", content: "" },
+    input: { queryId: "", text: "" },
     output: { success: false },
   });
 

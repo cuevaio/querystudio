@@ -12,7 +12,12 @@ interface AddTopicButtonProps {
     name: string;
     description: string;
     projectId: string;
-    queries: any[];
+    queries: Array<{
+      id: string;
+      text: string;
+      topicId: string;
+      projectId: string;
+    }>;
   }) => void;
 }
 

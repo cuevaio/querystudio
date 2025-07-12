@@ -12,7 +12,7 @@ interface AddQueryButtonProps {
   projectId: string;
   onQueryAdded: (newQuery: {
     id: string;
-    content: string;
+    text: string;
     topicId: string;
     projectId: string;
   }) => void;
@@ -28,7 +28,7 @@ export function AddQueryButton({
   const [isPending, startTransition] = useTransition();
 
   const [createState, createAction] = useActionState(createQueryAction, {
-    input: { topicId: "", projectId: "", content: "" },
+    input: { topicId: "", projectId: "", text: "" },
     output: { success: false },
   });
 
@@ -43,7 +43,7 @@ export function AddQueryButton({
         const formData = new FormData();
         formData.append("topicId", topicId);
         formData.append("projectId", projectId);
-        formData.append("content", inputValue.trim());
+        formData.append("text", inputValue.trim());
         createAction(formData);
       });
     }
@@ -67,7 +67,7 @@ export function AddQueryButton({
     if (createState.output.success) {
       onQueryAdded({
         id: createState.output.data.id,
-        content: createState.output.data.content,
+        text: createState.output.data.text,
         topicId,
         projectId,
       });

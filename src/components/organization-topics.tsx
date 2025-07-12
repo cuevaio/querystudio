@@ -16,7 +16,7 @@ interface ProjectTopicsProps {
       projectId: string;
       queries: Array<{
         id: string;
-        content: string;
+        text: string;
         topicId: string;
         projectId: string;
       }>;
@@ -35,7 +35,7 @@ export function ProjectTopics({ project }: ProjectTopicsProps) {
       projectId: string;
       queries: {
         id: string;
-        content: string;
+        text: string;
         topicId: string;
         projectId: string;
       }[];
@@ -73,7 +73,7 @@ export function ProjectTopics({ project }: ProjectTopicsProps) {
   const handleQueryAdded = React.useCallback(
     (newQuery: {
       id: string;
-      content: string;
+      text: string;
       topicId: string;
       projectId: string;
     }) => {
@@ -83,7 +83,7 @@ export function ProjectTopics({ project }: ProjectTopicsProps) {
             ? {
                 ...topic,
                 queries: [...topic.queries, newQuery].toSorted((a, b) =>
-                  a.content.localeCompare(b.content, "es-ES"),
+                  a.text.localeCompare(b.text, "es-ES"),
                 ),
               }
             : topic,
@@ -106,9 +106,7 @@ export function ProjectTopics({ project }: ProjectTopicsProps) {
                       ? { ...query, content: newContent }
                       : query,
                   )
-                  .toSorted((a, b) =>
-                    a.content.localeCompare(b.content, "es-ES"),
-                  ),
+                  .toSorted((a, b) => a.text.localeCompare(b.text, "es-ES")),
               }
             : topic,
         ),
@@ -126,9 +124,7 @@ export function ProjectTopics({ project }: ProjectTopicsProps) {
                 ...topic,
                 queries: topic.queries
                   .filter((query) => query.id !== queryId)
-                  .toSorted((a, b) =>
-                    a.content.localeCompare(b.content, "es-ES"),
-                  ),
+                  .toSorted((a, b) => a.text.localeCompare(b.text, "es-ES")),
               }
             : topic,
         ),

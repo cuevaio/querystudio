@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 interface QueryItemProps {
   query: {
     id: string;
-    content: string;
+    text: string;
     topicId: string;
     projectId: string;
   };
@@ -29,13 +29,13 @@ export function QueryItem({
   onQueryUpdated,
 }: QueryItemProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(query.content);
+  const [editValue, setEditValue] = useState(query.text);
   const [, startTransition] = useTransition();
 
   const [updateState, updateAction, isPendingUpdate] = useActionState(
     updateQueryAction,
     {
-      input: { queryId: "", content: "" },
+      input: { queryId: "", text: "" },
       output: { success: false },
     },
   );
@@ -50,15 +50,15 @@ export function QueryItem({
 
   const handleEdit = () => {
     setIsEditing(true);
-    setEditValue(query.content);
+    setEditValue(query.text);
   };
 
   const handleSave = () => {
-    if (editValue.trim() && editValue !== query.content) {
+    if (editValue.trim() && editValue !== query.text) {
       startTransition(async () => {
         const formData = new FormData();
         formData.append("queryId", query.id);
-        formData.append("content", editValue.trim());
+        formData.append("text", editValue.trim());
         updateAction(formData);
       });
     }
@@ -66,7 +66,7 @@ export function QueryItem({
 
   const handleCancel = () => {
     setIsEditing(false);
-    setEditValue(query.content);
+    setEditValue(query.text);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -155,7 +155,7 @@ export function QueryItem({
               }
             }}
           >
-            {query.content}
+            {query.text}
           </button>
         )}
       </div>

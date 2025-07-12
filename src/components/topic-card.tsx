@@ -29,7 +29,7 @@ interface TopicCardProps {
     projectId: string;
     queries: Array<{
       id: string;
-      content: string;
+      text: string;
       topicId: string;
       projectId: string;
     }>;
@@ -39,7 +39,7 @@ interface TopicCardProps {
 
   onQueryAdded: (newQuery: {
     id: string;
-    content: string;
+    text: string;
     topicId: string;
     projectId: string;
   }) => void;

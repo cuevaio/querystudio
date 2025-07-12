@@ -34,7 +34,7 @@ interface TopicAccordionProps {
     projectId: string;
     queries: Array<{
       id: string;
-      content: string;
+      text: string;
       topicId: string;
       projectId: string;
     }>;
@@ -43,7 +43,7 @@ interface TopicAccordionProps {
   onTopicDeleted: (topicId: string) => void;
   onQueryAdded: (newQuery: {
     id: string;
-    content: string;
+    text: string;
     topicId: string;
     projectId: string;
   }) => void;
@@ -63,7 +63,7 @@ interface TopicItemProps {
     projectId: string;
     queries: Array<{
       id: string;
-      content: string;
+      text: string;
       topicId: string;
       projectId: string;
     }>;
@@ -72,7 +72,7 @@ interface TopicItemProps {
   onTopicDeleted: (topicId: string) => void;
   onQueryAdded: (newQuery: {
     id: string;
-    content: string;
+    text: string;
     topicId: string;
     projectId: string;
   }) => void;
