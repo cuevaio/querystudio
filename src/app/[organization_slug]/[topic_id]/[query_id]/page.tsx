@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { projectsUsers, queries } from "@/db/schema";
 import { userId } from "@/lib/user-id";
+import { isValidUUID } from "@/lib/utils";
 
 interface QueryPageProps {
   params: Promise<{
@@ -20,6 +21,18 @@ interface QueryPageProps {
 
 export default async function QueryPage({ params }: QueryPageProps) {
   const { organization_slug, topic_id, query_id } = await params;
+
+  // Validate that query_id is a valid UUID
+  if (!isValidUUID(query_id)) {
+    notFound();
+    return;
+  }
+
+  // Validate that topic_id is a valid UUID
+  if (!isValidUUID(topic_id)) {
+    notFound();
+    return;
+  }
 
   const queryData = await db.query.queries.findFirst({
     where: and(eq(queries.id, query_id)),

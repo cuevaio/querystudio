@@ -1,8 +1,6 @@
 import { eq } from "drizzle-orm";
 import { BarChart3, Building2, Plus, Zap } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
-import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,15 +11,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db";
-import { projects, projectsUsers } from "@/db/schema";
+import { projects, projectsUsers, users } from "@/db/schema";
+import { userId } from "@/lib/user-id";
 
 export default async function HomePage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
   });
 
   // If not authenticated, show landing page
-  if (!session?.user?.id) {
+  if (!user) {
     return (
       <div className="flex min-h-screen flex-col">
         {/* Hero Section */}
@@ -115,7 +114,7 @@ export default async function HomePage() {
     })
     .from(projects)
     .innerJoin(projectsUsers, eq(projects.id, projectsUsers.projectId))
-    .where(eq(projectsUsers.userId, session.user.id))
+    .where(eq(projectsUsers.userId, userId))
     .orderBy(projects.createdAt);
 
   return (
@@ -124,7 +123,7 @@ export default async function HomePage() {
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="mb-2 font-bold text-3xl">
-            Welcome back, {session.user.name?.split(" ")[0]}
+            Welcome back, {user.name?.split(" ")[0]}
           </h1>
           <p className="text-muted-foreground">
             Manage your market research projects and track competitor insights

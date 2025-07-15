@@ -15,7 +15,6 @@ import {
   useName,
   useSector,
 } from "@/hooks/state";
-import { authClient } from "@/lib/auth-client";
 import { CompanySchema } from "@/schemas/company";
 
 export default function CreateProjectPage() {
@@ -25,8 +24,6 @@ export default function CreateProjectPage() {
   const [, setCountry] = useCountry();
   const [, setLanguage] = useLanguage();
   const [, setDescription] = useDescription();
-
-  const { data } = authClient.useSession();
 
   const {
     object,

@@ -16,7 +16,7 @@ export const projectsUsers = pgTable(
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
     projectId: uuid("project_id").notNull(),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
       .default(sql`timezone('utc'::text, now())`)
       .notNull(),

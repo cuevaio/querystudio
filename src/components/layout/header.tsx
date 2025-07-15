@@ -2,7 +2,6 @@
 
 import { Building2, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,30 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authClient } from "@/lib/auth-client";
+import type { users } from "@/db/schema";
 
 interface HeaderProps {
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    image?: string;
-  } | null;
+  user: typeof users.$inferSelect | null;
 }
 
 export function Header({ user }: HeaderProps) {
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/signin");
-        },
-      },
-    });
-  };
-
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between">
@@ -76,13 +58,13 @@ export function Header({ user }: HeaderProps) {
                   className="relative h-8 w-8 rounded-full"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image} alt={user.name} />
+                    <AvatarImage src={user.image || ""} alt={user.name || ""} />
                     <AvatarFallback>
                       {user.name
-                        .split(" ")
+                        ?.split(" ")
                         .map((n) => n[0])
                         .join("")
-                        .toUpperCase()}
+                        .toUpperCase() || "?"}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -108,7 +90,7 @@ export function Header({ user }: HeaderProps) {
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
+                <DropdownMenuItem>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>

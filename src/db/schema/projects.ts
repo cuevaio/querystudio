@@ -33,7 +33,7 @@ export const projects = pgTable(
     language: text(),
     lastAnalysis: date("last_analysis"),
     logo: text(),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id").notNull(),
     createdAt: timestamp("created_at", {
       withTimezone: true,
       mode: "string",

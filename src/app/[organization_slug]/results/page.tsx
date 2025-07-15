@@ -7,7 +7,10 @@ import {
   projects,
   sources as sourcesTable,
 } from "@/db/schema";
-import ResultsClient from "./results-client";
+import ResultsClient, {
+  type ExecutionWithQueryExecutions,
+  type SourceWithDomain,
+} from "./results-client";
 
 interface ResultsPageProps {
   params: Promise<{
@@ -95,8 +98,8 @@ export default async function ResultsPage({ params }: ResultsPageProps) {
         id: project.id,
         name: project.name,
       }}
-      executions={project.executions}
-      allSources={sources}
+      executions={project.executions as ExecutionWithQueryExecutions[]}
+      allSources={sources as SourceWithDomain[]}
       competitors={competitors}
       domains={domains}
       totalQueries={totalQueries}
