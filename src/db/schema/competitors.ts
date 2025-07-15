@@ -18,7 +18,7 @@ export const competitors = pgTable(
     projectId: uuid("project_id"),
     name: text().notNull(),
     alternativeNames: text("alternative_names").array().default([""]),
-    mentionCount: integer("mention_count").default(0),
+    mentionCount: integer("mention_count").default(1),
     lastMentionDate: timestamp("last_mention_date", {
       withTimezone: true,
       mode: "string",
