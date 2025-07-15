@@ -53,16 +53,16 @@ export const projects = pgTable(
 );
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
+  topics: many(topics),
   user: one(users, {
     fields: [projects.userId],
     references: [users.id],
   }),
-  projectsUsers: many(projectsUsers),
-  queries: many(queries),
-  topics: many(topics),
   competitors: many(competitors),
+  domains: many(domains),
   executions: many(executions),
   sources: many(sources),
-  domains: many(domains),
   projectModels: many(projectModels),
+  projectsUsers: many(projectsUsers),
+  queries: many(queries),
 }));

@@ -25,7 +25,7 @@ export const domains = pgTable(
     ),
     uniqueIndex("domains_project_name_key").using(
       "btree",
-      table.projectId.asc().nullsLast().op("uuid_ops"),
+      table.projectId.asc().nullsLast().op("text_ops"),
       table.name.asc().nullsLast().op("text_ops"),
     ),
     foreignKey({
@@ -37,9 +37,9 @@ export const domains = pgTable(
 );
 
 export const domainsRelations = relations(domains, ({ one, many }) => ({
-  sources: many(sources),
   project: one(projects, {
     fields: [domains.projectId],
     references: [projects.id],
   }),
+  sources: many(sources),
 }));

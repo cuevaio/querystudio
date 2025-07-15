@@ -26,7 +26,7 @@ export const sources = pgTable(
     queryExecutionId: uuid("query_execution_id"),
     queryText: text("query_text"),
     queryType: queryTypeEnum("query_type").default("sector"),
-    mentions: text().array().default([""]),
+    mentions: text().array().default(['""']),
   },
   (table) => [
     index("idx_sources_mentions").using(
@@ -35,12 +35,12 @@ export const sources = pgTable(
     ),
     index("idx_sources_query_type").using(
       "btree",
-      table.queryType.asc().nullsLast(),
+      table.queryType.asc().nullsLast().op("enum_ops"),
     ),
     uniqueIndex("sources_exec_url_key").using(
       "btree",
-      table.queryExecutionId.asc().nullsLast().op("uuid_ops"),
-      table.url.asc().nullsLast().op("text_ops"),
+      table.queryExecutionId.asc().nullsLast().op("text_ops"),
+      table.url.asc().nullsLast().op("uuid_ops"),
     ),
     foreignKey({
       columns: [table.domainId],

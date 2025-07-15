@@ -44,6 +44,7 @@ export const queries = pgTable(
 );
 
 export const queriesRelations = relations(queries, ({ one, many }) => ({
+  queryExecutions: many(queryExecutions),
   project: one(projects, {
     fields: [queries.projectId],
     references: [projects.id],
@@ -52,7 +53,6 @@ export const queriesRelations = relations(queries, ({ one, many }) => ({
     fields: [queries.topicId],
     references: [topics.id],
   }),
-  queryExecutions: many(queryExecutions),
 }));
 
 export type QueryInsert = typeof queries.$inferInsert;

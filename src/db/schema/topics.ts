@@ -21,9 +21,9 @@ export const topics = pgTable(
 );
 
 export const topicsRelations = relations(topics, ({ one, many }) => ({
-  queries: many(queries),
   project: one(projects, {
     fields: [topics.projectId],
     references: [projects.id],
   }),
+  queries: many(queries),
 }));
