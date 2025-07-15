@@ -15,12 +15,12 @@ export const projectModels = pgTable(
       columns: [table.modelId],
       foreignColumns: [models.id],
       name: "project_models_model_id_fkey",
-    }),
+    }).onDelete("cascade"),
     foreignKey({
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "project_models_project_id_fkey",
-    }),
+    }).onDelete("cascade"),
     unique("project_models_project_id_model_id_key").on(
       table.projectId,
       table.modelId,

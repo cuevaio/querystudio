@@ -12,7 +12,7 @@ export const models = pgTable("models", {
 });
 
 export const modelsRelations = relations(models, ({ many }) => ({
-  queryExecutions: many(queryExecutions),
   sources: many(sources),
+  queryExecutions: many(queryExecutions),
   projectModels: many(projectModels),
 }));

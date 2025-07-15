@@ -1,9 +1,10 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   date,
   foreignKey,
   index,
+  pgPolicy,
   pgTable,
   text,
   timestamp,
@@ -24,20 +25,24 @@ export const projects = pgTable(
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
     name: text().notNull(),
-    slug: text(),
     description: text(),
     url: text(),
     status: boolean().default(true),
     region: text(),
     sector: text(),
-    language: text(),
     lastAnalysis: date("last_analysis"),
-    logo: text(),
-    userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", {
       withTimezone: true,
       mode: "string",
-    }).defaultNow(),
+    }).default(sql`(now() AT TIME ZONE 'utc'::text)`),
+    logo: text(),
+    userId: uuid("user_id").notNull(),
+    language: text(),
+    slug: text(),
+    updatedAt: timestamp("updated_at", {
+      withTimezone: true,
+      mode: "string",
+    }).default(sql`(now() AT TIME ZONE 'utc'::text)`),
   },
   (table) => [
     index("projects_status_idx").using(
@@ -48,21 +53,44 @@ export const projects = pgTable(
       columns: [table.userId],
       foreignColumns: [users.id],
       name: "projects_user_id_fkey",
+    }).onDelete("cascade"),
+    pgPolicy("Users can delete projects they have access to", {
+      as: "permissive",
+      for: "delete",
+      to: ["public"],
+      using: sql`(EXISTS ( SELECT 1
+   FROM projects_users pu
+  WHERE ((pu.project_id = projects.id) AND (pu.user_id = auth.uid()))))`,
+    }),
+    pgPolicy("Users can insert projects", {
+      as: "permissive",
+      for: "insert",
+      to: ["public"],
+    }),
+    pgPolicy("Users can update projects they have access to", {
+      as: "permissive",
+      for: "update",
+      to: ["public"],
+    }),
+    pgPolicy("Users can view projects they have access to", {
+      as: "permissive",
+      for: "select",
+      to: ["public"],
     }),
   ],
 );
 
 export const projectsRelations = relations(projects, ({ one, many }) => ({
-  topics: many(topics),
+  domains: many(domains),
+  projectsUsers: many(projectsUsers),
+  competitors: many(competitors),
   user: one(users, {
     fields: [projects.userId],
     references: [users.id],
   }),
-  competitors: many(competitors),
-  domains: many(domains),
-  executions: many(executions),
   sources: many(sources),
-  projectModels: many(projectModels),
-  projectsUsers: many(projectsUsers),
   queries: many(queries),
+  topics: many(topics),
+  executions: many(executions),
+  projectModels: many(projectModels),
 }));

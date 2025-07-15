@@ -16,14 +16,14 @@ export const topics = pgTable(
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "topics_project_id_fkey",
-    }),
+    }).onDelete("cascade"),
   ],
 );
 
 export const topicsRelations = relations(topics, ({ one, many }) => ({
+  queries: many(queries),
   project: one(projects, {
     fields: [topics.projectId],
     references: [projects.id],
   }),
-  queries: many(queries),
 }));

@@ -1,9 +1,9 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   foreignKey,
   index,
-  pgEnum,
+  pgPolicy,
   pgTable,
   text,
   uuid,
@@ -12,18 +12,16 @@ import { projects } from "./projects";
 import { queryExecutions } from "./query_executions";
 import { topics } from "./topics";
 
-export const queryTypeEnum = pgEnum("query_type", ["sector", "product"]);
-
 export const queries = pgTable(
   "queries",
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
     topicId: uuid("topic_id"),
-    projectId: uuid("project_id").notNull(),
     text: text().notNull(),
     country: text(),
     active: boolean().default(true),
-    queryType: queryTypeEnum("query_type").default("sector").notNull(),
+    queryType: text("query_type").default("sector").notNull(),
+    projectId: uuid("project_id").notNull(),
   },
   (table) => [
     index("queries_project_id_idx").using(
@@ -34,11 +32,32 @@ export const queries = pgTable(
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "queries_project_id_fkey",
-    }),
+    }).onDelete("cascade"),
     foreignKey({
       columns: [table.topicId],
       foreignColumns: [topics.id],
       name: "queries_topic_id_fkey",
+    }).onDelete("cascade"),
+    pgPolicy("Enable read access for all users", {
+      as: "permissive",
+      for: "select",
+      to: ["public"],
+      using: sql`true`,
+    }),
+    pgPolicy("Users can create queries for their projects", {
+      as: "permissive",
+      for: "insert",
+      to: ["public"],
+    }),
+    pgPolicy("Users can delete queries for their projects", {
+      as: "permissive",
+      for: "delete",
+      to: ["public"],
+    }),
+    pgPolicy("Users can update queries for their projects", {
+      as: "permissive",
+      for: "update",
+      to: ["public"],
     }),
   ],
 );

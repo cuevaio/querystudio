@@ -32,7 +32,7 @@ export const domains = pgTable(
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "domains_project_id_fkey",
-    }),
+    }).onDelete("cascade"),
   ],
 );
 

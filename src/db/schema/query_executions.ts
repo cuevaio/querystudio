@@ -12,31 +12,32 @@ export const queryExecutions = pgTable(
     executionId: uuid("execution_id"),
     queryId: uuid("query_id"),
     modelId: uuid("model_id"),
-    errorMessage: text("error_message"),
     response: text(),
+    errorMessage: text("error_message"),
   },
   (table) => [
     foreignKey({
       columns: [table.executionId],
       foreignColumns: [executions.id],
       name: "query_executions_execution_id_fkey",
-    }),
+    }).onDelete("cascade"),
     foreignKey({
       columns: [table.modelId],
       foreignColumns: [models.id],
       name: "query_executions_model_id_fkey",
-    }),
+    }).onDelete("cascade"),
     foreignKey({
       columns: [table.queryId],
       foreignColumns: [queries.id],
       name: "query_executions_query_id_fkey",
-    }),
+    }).onDelete("cascade"),
   ],
 );
 
 export const queryExecutionsRelations = relations(
   queryExecutions,
   ({ one, many }) => ({
+    sources: many(sources),
     execution: one(executions, {
       fields: [queryExecutions.executionId],
       references: [executions.id],
@@ -49,6 +50,5 @@ export const queryExecutionsRelations = relations(
       fields: [queryExecutions.queryId],
       references: [queries.id],
     }),
-    sources: many(sources),
   }),
 );

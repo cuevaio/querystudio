@@ -17,8 +17,8 @@ export const competitors = pgTable(
     id: uuid().defaultRandom().primaryKey().notNull(),
     projectId: uuid("project_id"),
     name: text().notNull(),
-    alternativeNames: text("alternative_names").array().default(['""']),
-    mentionCount: integer("mention_count").default(1),
+    alternativeNames: text("alternative_names").array().default([""]),
+    mentionCount: integer("mention_count").default(0),
     lastMentionDate: timestamp("last_mention_date", {
       withTimezone: true,
       mode: "string",
@@ -34,14 +34,14 @@ export const competitors = pgTable(
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "competitors_project_id_fkey",
-    }),
+    }).onDelete("cascade"),
   ],
 );
 
 export const competitorsRelations = relations(competitors, ({ one, many }) => ({
+  mentions: many(mentions),
   project: one(projects, {
     fields: [competitors.projectId],
     references: [projects.id],
   }),
-  mentions: many(mentions),
 }));

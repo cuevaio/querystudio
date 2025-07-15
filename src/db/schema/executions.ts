@@ -18,10 +18,9 @@ export const executions = pgTable(
       columns: [table.projectId],
       foreignColumns: [projects.id],
       name: "executions_project_id_fkey",
-    }),
+    }).onDelete("cascade"),
   ],
 );
-
 export const executionsRelations = relations(executions, ({ one, many }) => ({
   queryExecutions: many(queryExecutions),
   project: one(projects, {

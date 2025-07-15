@@ -25,12 +25,12 @@ export const mentions = pgTable(
       columns: [table.competitorId],
       foreignColumns: [competitors.id],
       name: "mentions_competitor_id_fkey",
-    }),
+    }).onDelete("cascade"),
     foreignKey({
       columns: [table.sourceId],
       foreignColumns: [sources.id],
       name: "mentions_source_id_fkey",
-    }),
+    }).onDelete("cascade"),
     unique("mentions_source_id_competitor_id_key").on(
       table.sourceId,
       table.competitorId,
