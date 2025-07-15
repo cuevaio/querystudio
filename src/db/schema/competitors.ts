@@ -27,7 +27,7 @@ export const competitors = pgTable(
   (table) => [
     uniqueIndex("competitors_project_name_key").using(
       "btree",
-      table.projectId.asc().nullsLast().op("text_ops"),
+      table.projectId.asc().nullsLast().op("uuid_ops"),
       table.name.asc().nullsLast().op("text_ops"),
     ),
     foreignKey({

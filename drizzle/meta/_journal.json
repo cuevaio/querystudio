@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1752269818153,
-      "tag": "0000_tired_stranger",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1752270519292,
-      "tag": "0001_parched_squirrel_girl",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1752271252094,
-      "tag": "0002_chunky_whizzer",
+      "when": 1752549477632,
+      "tag": "0000_productive_iron_man",
       "breakpoints": true
     }
   ]

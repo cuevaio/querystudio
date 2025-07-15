@@ -1,9 +1,9 @@
 CREATE TYPE "public"."query_type" AS ENUM('sector', 'product');--> statement-breakpoint
-CREATE TABLE "account" (
+CREATE TABLE "accounts" (
 	"id" text PRIMARY KEY NOT NULL,
 	"account_id" text NOT NULL,
 	"provider_id" text NOT NULL,
-	"user_id" uuid NOT NULL,
+	"user_id" text NOT NULL,
 	"access_token" text,
 	"refresh_token" text,
 	"id_token" text,
@@ -15,7 +15,7 @@ CREATE TABLE "account" (
 	"updated_at" timestamp NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "session" (
+CREATE TABLE "sessions" (
 	"id" text PRIMARY KEY NOT NULL,
 	"expires_at" timestamp NOT NULL,
 	"token" text NOT NULL,
@@ -23,12 +23,12 @@ CREATE TABLE "session" (
 	"updated_at" timestamp NOT NULL,
 	"ip_address" text,
 	"user_agent" text,
-	"user_id" uuid NOT NULL,
-	CONSTRAINT "session_token_unique" UNIQUE("token")
+	"user_id" text NOT NULL,
+	CONSTRAINT "sessions_token_unique" UNIQUE("token")
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"id" text PRIMARY KEY NOT NULL,
 	"email" text NOT NULL,
 	"name" text,
 	"email_verified" boolean NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_email_key" UNIQUE("email")
 );
 --> statement-breakpoint
-CREATE TABLE "verification" (
+CREATE TABLE "verifications" (
 	"id" text PRIMARY KEY NOT NULL,
 	"identifier" text NOT NULL,
 	"value" text NOT NULL,
@@ -103,14 +103,14 @@ CREATE TABLE "projects" (
 	"language" text,
 	"last_analysis" date,
 	"logo" text,
-	"user_id" uuid NOT NULL,
+	"user_id" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "projects_users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"project_id" uuid NOT NULL,
-	"user_id" uuid NOT NULL,
+	"user_id" text NOT NULL,
 	"created_at" timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
 	"role" text,
@@ -124,7 +124,7 @@ CREATE TABLE "queries" (
 	"text" text NOT NULL,
 	"country" text,
 	"active" boolean DEFAULT true,
-	"query_type" text DEFAULT 'sector' NOT NULL
+	"query_type" "query_type" DEFAULT 'sector' NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "query_executions" (
@@ -132,6 +132,7 @@ CREATE TABLE "query_executions" (
 	"execution_id" uuid,
 	"query_id" uuid,
 	"model_id" uuid,
+	"error_message" text,
 	"response" text
 );
 --> statement-breakpoint
@@ -144,9 +145,8 @@ CREATE TABLE "sources" (
 	"model_id" uuid,
 	"query_execution_id" uuid,
 	"query_text" text,
-	"query_type" text DEFAULT 'sector',
-	"mentions" text[] DEFAULT '{""}',
-	CONSTRAINT "check_query_type" CHECK (query_type = 'sector'::text)
+	"query_type" "query_type" DEFAULT 'sector',
+	"mentions" text[] DEFAULT '{""}'
 );
 --> statement-breakpoint
 CREATE TABLE "topics" (
@@ -156,8 +156,8 @@ CREATE TABLE "topics" (
 	"description" text
 );
 --> statement-breakpoint
-ALTER TABLE "account" ADD CONSTRAINT "account_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "session" ADD CONSTRAINT "session_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "accounts" ADD CONSTRAINT "accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "competitors" ADD CONSTRAINT "competitors_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "domains" ADD CONSTRAINT "domains_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "executions" ADD CONSTRAINT "executions_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -179,13 +179,13 @@ ALTER TABLE "sources" ADD CONSTRAINT "sources_project_id_fkey" FOREIGN KEY ("pro
 ALTER TABLE "sources" ADD CONSTRAINT "sources_query_execution_id_fkey" FOREIGN KEY ("query_execution_id") REFERENCES "public"."query_executions"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "topics" ADD CONSTRAINT "topics_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "users_email_idx" ON "users" USING btree ("email" text_ops);--> statement-breakpoint
-CREATE UNIQUE INDEX "competitors_project_name_key" ON "competitors" USING btree ("project_id" text_ops,"name" text_ops);--> statement-breakpoint
+CREATE UNIQUE INDEX "competitors_project_name_key" ON "competitors" USING btree ("project_id" uuid_ops,"name" text_ops);--> statement-breakpoint
 CREATE INDEX "domains_category_idx" ON "domains" USING btree ("category" text_ops);--> statement-breakpoint
-CREATE UNIQUE INDEX "domains_project_name_key" ON "domains" USING btree ("project_id" text_ops,"name" text_ops);--> statement-breakpoint
+CREATE UNIQUE INDEX "domains_project_name_key" ON "domains" USING btree ("project_id" uuid_ops,"name" text_ops);--> statement-breakpoint
 CREATE INDEX "projects_status_idx" ON "projects" USING btree ("status" bool_ops);--> statement-breakpoint
 CREATE INDEX "projects_users_project_id_idx" ON "projects_users" USING btree ("project_id" uuid_ops);--> statement-breakpoint
-CREATE INDEX "projects_users_user_id_idx" ON "projects_users" USING btree ("user_id" uuid_ops);--> statement-breakpoint
+CREATE INDEX "projects_users_user_id_idx" ON "projects_users" USING btree ("user_id" text_ops);--> statement-breakpoint
 CREATE INDEX "queries_project_id_idx" ON "queries" USING btree ("project_id" uuid_ops);--> statement-breakpoint
 CREATE INDEX "idx_sources_mentions" ON "sources" USING gin ("mentions" array_ops);--> statement-breakpoint
-CREATE INDEX "idx_sources_query_type" ON "sources" USING btree ("query_type" text_ops);--> statement-breakpoint
-CREATE UNIQUE INDEX "sources_exec_url_key" ON "sources" USING btree ("query_execution_id" text_ops,"url" uuid_ops);
+CREATE INDEX "idx_sources_query_type" ON "sources" USING btree ("query_type");--> statement-breakpoint
+CREATE UNIQUE INDEX "sources_exec_url_key" ON "sources" USING btree ("query_execution_id" uuid_ops,"url" text_ops);

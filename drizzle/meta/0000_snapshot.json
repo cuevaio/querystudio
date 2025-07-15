@@ -1,11 +1,11 @@
 {
-  "id": "24a7466d-ecb3-4d2b-89df-c8348d2080fa",
+  "id": "d96614a2-1c87-49ff-a231-b2ba510b5edd",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.account": {
-      "name": "account",
+    "public.accounts": {
+      "name": "accounts",
       "schema": "",
       "columns": {
         "id": {
@@ -28,7 +28,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -89,9 +89,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "account_user_id_users_id_fk": {
-          "name": "account_user_id_users_id_fk",
-          "tableFrom": "account",
+        "accounts_user_id_users_id_fk": {
+          "name": "accounts_user_id_users_id_fk",
+          "tableFrom": "accounts",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -109,8 +109,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.session": {
-      "name": "session",
+    "public.sessions": {
+      "name": "sessions",
       "schema": "",
       "columns": {
         "id": {
@@ -157,16 +157,16 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "session_user_id_users_id_fk": {
-          "name": "session_user_id_users_id_fk",
-          "tableFrom": "session",
+        "sessions_user_id_users_id_fk": {
+          "name": "sessions_user_id_users_id_fk",
+          "tableFrom": "sessions",
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
@@ -180,8 +180,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "session_token_unique": {
-          "name": "session_token_unique",
+        "sessions_token_unique": {
+          "name": "sessions_token_unique",
           "nullsNotDistinct": false,
           "columns": [
             "token"
@@ -198,10 +198,9 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
+          "notNull": true
         },
         "email": {
           "name": "email",
@@ -273,8 +272,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.verification": {
-      "name": "verification",
+    "public.verifications": {
+      "name": "verifications",
       "schema": "",
       "columns": {
         "id": {
@@ -375,7 +374,7 @@
               "isExpression": false,
               "asc": true,
               "nulls": "last",
-              "opclass": "text_ops"
+              "opclass": "uuid_ops"
             },
             {
               "expression": "name",
@@ -467,7 +466,7 @@
               "isExpression": false,
               "asc": true,
               "nulls": "last",
-              "opclass": "text_ops"
+              "opclass": "uuid_ops"
             },
             {
               "expression": "name",
@@ -806,7 +805,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -876,7 +875,7 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -926,7 +925,7 @@
               "isExpression": false,
               "asc": true,
               "nulls": "last",
-              "opclass": "uuid_ops"
+              "opclass": "text_ops"
             }
           ],
           "isUnique": false,
@@ -1022,7 +1021,8 @@
         },
         "query_type": {
           "name": "query_type",
-          "type": "text",
+          "type": "query_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'sector'"
@@ -1106,6 +1106,12 @@
         "model_id": {
           "name": "model_id",
           "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -1219,7 +1225,8 @@
         },
         "query_type": {
           "name": "query_type",
-          "type": "text",
+          "type": "query_type",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false,
           "default": "'sector'"
@@ -1256,8 +1263,7 @@
               "expression": "query_type",
               "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops"
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1273,14 +1279,14 @@
               "isExpression": false,
               "asc": true,
               "nulls": "last",
-              "opclass": "text_ops"
+              "opclass": "uuid_ops"
             },
             {
               "expression": "url",
               "isExpression": false,
               "asc": true,
               "nulls": "last",
-              "opclass": "uuid_ops"
+              "opclass": "text_ops"
             }
           ],
           "isUnique": true,
@@ -1346,12 +1352,7 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {
-        "check_query_type": {
-          "name": "check_query_type",
-          "value": "query_type = 'sector'::text"
-        }
-      },
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.topics": {

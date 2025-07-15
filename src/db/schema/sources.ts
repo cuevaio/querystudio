@@ -1,6 +1,5 @@
-import { relations, sql } from "drizzle-orm";
+import { relations } from "drizzle-orm";
 import {
-  check,
   foreignKey,
   index,
   pgTable,
@@ -12,6 +11,7 @@ import { domains } from "./domains";
 import { mentions } from "./mentions";
 import { models } from "./models";
 import { projects } from "./projects";
+import { queryTypeEnum } from "./queries";
 import { queryExecutions } from "./query_executions";
 
 export const sources = pgTable(
@@ -25,7 +25,7 @@ export const sources = pgTable(
     modelId: uuid("model_id"),
     queryExecutionId: uuid("query_execution_id"),
     queryText: text("query_text"),
-    queryType: text("query_type").default("sector"),
+    queryType: queryTypeEnum("query_type").default("sector"),
     mentions: text().array().default([""]),
   },
   (table) => [
@@ -35,12 +35,12 @@ export const sources = pgTable(
     ),
     index("idx_sources_query_type").using(
       "btree",
-      table.queryType.asc().nullsLast().op("text_ops"),
+      table.queryType.asc().nullsLast(),
     ),
     uniqueIndex("sources_exec_url_key").using(
       "btree",
-      table.queryExecutionId.asc().nullsLast().op("text_ops"),
-      table.url.asc().nullsLast().op("uuid_ops"),
+      table.queryExecutionId.asc().nullsLast().op("uuid_ops"),
+      table.url.asc().nullsLast().op("text_ops"),
     ),
     foreignKey({
       columns: [table.domainId],
@@ -62,7 +62,6 @@ export const sources = pgTable(
       foreignColumns: [queryExecutions.id],
       name: "sources_query_execution_id_fkey",
     }),
-    check("check_query_type", sql`query_type = 'sector'::text`),
   ],
 );
 

@@ -27,6 +27,7 @@ export default function CompanyProfileForm() {
   const [, setDescription] = useDescription();
 
   const { data } = authClient.useSession();
+  console.log({ data });
 
   const {
     object,

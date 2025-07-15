@@ -23,7 +23,7 @@ export const queries = pgTable(
     text: text().notNull(),
     country: text(),
     active: boolean().default(true),
-    queryType: text("query_type").default("sector").notNull(),
+    queryType: queryTypeEnum("query_type").default("sector").notNull(),
   },
   (table) => [
     index("queries_project_id_idx").using(

@@ -12,6 +12,7 @@ export const queryExecutions = pgTable(
     executionId: uuid("execution_id"),
     queryId: uuid("query_id"),
     modelId: uuid("model_id"),
+    errorMessage: text("error_message"),
     response: text(),
   },
   (table) => [
