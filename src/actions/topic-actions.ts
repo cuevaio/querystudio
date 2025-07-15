@@ -7,6 +7,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { db } from "@/db";
 import { projectsUsers, topics } from "@/db/schema";
+import { userId } from "@/lib/user-id";
 
 // Create Topic Action
 export type CreateTopicActionState = {
@@ -53,20 +54,6 @@ export async function createTopicAction(
   }
 
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      state.output = {
-        success: false,
-        error: "Unauthorized",
-      };
-      return state;
-    }
-
-    const userId = session.user.id;
-
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),

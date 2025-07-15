@@ -14,13 +14,13 @@ import type {
 } from "@/db/schema";
 
 type ProjectSelect = typeof projects.$inferSelect;
-type ExecutionWithQueryExecutions = typeof executions.$inferSelect & {
+export type ExecutionWithQueryExecutions = typeof executions.$inferSelect & {
   queryExecutions: (typeof queryExecutions.$inferSelect & {
     query: typeof queries.$inferSelect | null;
   })[];
 };
-type SourceWithDomain = typeof sources.$inferSelect & {
-  domain: typeof domains.$inferSelect | null;
+export type SourceWithDomain = typeof sources.$inferSelect & {
+  domain: typeof domains.$inferSelect;
 };
 type CompetitorSelect = typeof competitors.$inferSelect;
 type DomainSelect = typeof domains.$inferSelect;

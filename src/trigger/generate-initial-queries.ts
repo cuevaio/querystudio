@@ -4,7 +4,6 @@ import { generateText, Output } from "ai";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, projects, type QueryInsert, queries, topics } from "@/db";
-import { nanoid } from "@/lib/nanoid";
 import { decodeUnicodeEscapes } from "@/lib/utils";
 import { GENERATE_TOPIC_QUERIES_PROMPT } from "@/prompts/generate-topic-queries";
 import { AIGeneratedQuerySchema } from "@/schemas/ai-generated-query";
@@ -153,11 +152,11 @@ export const generateQueriesForTopic = schemaTask({
       data.map(
         (queryData) =>
           ({
-            id: nanoid(),
             topicId,
             projectId,
+            country: topicData.project?.region,
             text: queryData.query,
-            queryType: queryData.companySpecific ? "brand" : "market",
+            queryType: queryData.companySpecific ? "product" : "sector",
             active: true,
           }) satisfies QueryInsert,
       ),
