@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { AIGeneratedQuerySchema } from "./ai-generated-query";
 
+console.log({});
+
 export const RecommendedTopicsSchema = z.object({
   topic_1: z.string(),
   description_1: z.string(),
