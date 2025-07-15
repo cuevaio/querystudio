@@ -1,15 +1,14 @@
 import { and, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
-import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { QueryActionsMenu } from "@/components/query-actions-menu";
 import { QueryChatUI } from "@/components/query-chat-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { projectsUsers, queries } from "@/db/schema";
+import { userId } from "@/lib/user-id";
 
 interface QueryPageProps {
   params: Promise<{
@@ -21,16 +20,6 @@ interface QueryPageProps {
 
 export default async function QueryPage({ params }: QueryPageProps) {
   const { organization_slug, topic_id, query_id } = await params;
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user?.id) {
-    redirect("/signin");
-  }
-
-  const userId = session.user.id;
 
   const queryData = await db.query.queries.findFirst({
     where: and(eq(queries.id, query_id)),

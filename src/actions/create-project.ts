@@ -2,9 +2,7 @@
 
 import { tasks } from "@trigger.dev/sdk/v3";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { db } from "@/db";
 import {
   projects,
@@ -14,6 +12,7 @@ import {
   topics,
 } from "@/db/schema";
 import { nanoid } from "@/lib/nanoid";
+import { userId } from "@/lib/user-id";
 import { AIGeneratedQuerySchema } from "@/schemas/ai-generated-query";
 import type { generateInitialQueries } from "@/trigger/generate-initial-queries";
 
@@ -86,20 +85,6 @@ export async function createProject(
   }
 
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      state.output = {
-        success: false,
-        error: "You must be authenticated to create a project",
-      };
-      return state;
-    }
-
-    const userId = session.user.id;
-
     let slug = slugify(parsed.data.name);
 
     const existingProject = await db.query.projects.findFirst({
