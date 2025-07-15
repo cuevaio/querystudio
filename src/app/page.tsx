@@ -120,7 +120,7 @@ export default async function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mx-auto max-w-6xl">
+      <div className="">
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="mb-2 font-bold text-3xl">
