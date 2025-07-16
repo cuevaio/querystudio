@@ -37,6 +37,13 @@ export default async function ResultsPage({ params }: ResultsPageProps) {
                   queryType: true,
                 },
               },
+              model: {
+                columns: {
+                  vendor: true,
+                  name: true,
+                  color: true,
+                },
+              },
             },
           },
         },
@@ -50,13 +57,31 @@ export default async function ResultsPage({ params }: ResultsPageProps) {
 
   // Get all query execution IDs from all executions for this project
   const _latestExecution = project.executions[0];
-  const allQueryExecutionIds = project.executions.flatMap((execution) =>
-    execution.queryExecutions.map((qe) => qe.id),
-  );
 
-  // Get competitors with mentions, ordered by mention count
+  // Get competitors with mentions, including model information, ordered by mention count
   const allCompetitors = await db.query.competitors.findMany({
     where: eq(competitorsTable.projectId, project.id),
+    with: {
+      mentions: {
+        with: {
+          source: {
+            with: {
+              queryExecution: {
+                with: {
+                  model: {
+                    columns: {
+                      vendor: true,
+                      name: true,
+                      color: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     orderBy: (competitor, { desc }) => [
       desc(competitor.mentionCount),
       desc(competitor.lastMentionDate),
@@ -89,9 +114,6 @@ export default async function ResultsPage({ params }: ResultsPageProps) {
     limit: 10,
   });
 
-  // Calculate summary stats
-  const totalQueries = allQueryExecutionIds.length;
-
   return (
     <ResultsClient
       project={{
@@ -102,7 +124,6 @@ export default async function ResultsPage({ params }: ResultsPageProps) {
       allSources={sources as SourceWithDomain[]}
       competitors={competitors}
       domains={domains}
-      totalQueries={totalQueries}
     />
   );
 }

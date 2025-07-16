@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
   competitors,
   domains,
   executions,
+  mentions,
   projects,
   queries,
   queryExecutions,
@@ -17,66 +19,152 @@ type ProjectSelect = typeof projects.$inferSelect;
 export type ExecutionWithQueryExecutions = typeof executions.$inferSelect & {
   queryExecutions: (typeof queryExecutions.$inferSelect & {
     query: typeof queries.$inferSelect | null;
+    model: { vendor: string | null; name: string; color: string | null } | null;
   })[];
 };
 export type SourceWithDomain = typeof sources.$inferSelect & {
   domain: typeof domains.$inferSelect;
 };
-type CompetitorSelect = typeof competitors.$inferSelect;
+export type CompetitorWithMentions = typeof competitors.$inferSelect & {
+  mentions: (typeof mentions.$inferSelect & {
+    source:
+      | (typeof sources.$inferSelect & {
+          queryExecution:
+            | (typeof queryExecutions.$inferSelect & {
+                model: {
+                  vendor: string | null;
+                  name: string;
+                  color: string | null;
+                } | null;
+              })
+            | null;
+        })
+      | null;
+  })[];
+};
 type DomainSelect = typeof domains.$inferSelect;
 
 interface ResultsClientProps {
   project: Pick<ProjectSelect, "id" | "name">;
   executions: ExecutionWithQueryExecutions[];
   allSources: SourceWithDomain[];
-  competitors: CompetitorSelect[];
+  competitors: CompetitorWithMentions[];
   domains: DomainSelect[];
-  totalQueries: number;
 }
 
 export default function ResultsClient({
   project,
   executions,
   allSources,
-  competitors,
+  competitors: allCompetitors,
   domains,
-  totalQueries,
 }: ResultsClientProps) {
   const [selectedExecutionId, setSelectedExecutionId] = useState<string | null>(
     null,
   );
+  const [selectedVendor, setSelectedVendor] = useState<string>("all");
 
-  // Get filtered data based on selected execution
-  const getFilteredSources = () => {
-    if (!selectedExecutionId) return allSources;
-
-    const selectedExecution = executions.find(
-      (e) => e.id === selectedExecutionId,
-    );
-    if (!selectedExecution) return allSources;
-
-    const executionQueryIds = selectedExecution.queryExecutions.map(
-      (qe) => qe.id,
-    );
-    return allSources.filter(
-      (source) =>
-        source.queryExecutionId &&
-        executionQueryIds.includes(source.queryExecutionId),
-    );
+  // Get available vendors from executions
+  const getAvailableVendors = () => {
+    const vendors = new Set<string>();
+    executions.forEach((execution) => {
+      execution.queryExecutions.forEach((qe) => {
+        if (qe.model?.vendor) {
+          vendors.add(qe.model.vendor);
+        }
+      });
+    });
+    return Array.from(vendors).sort();
   };
 
-  const filteredSources = getFilteredSources();
-  const isFiltered = selectedExecutionId !== null;
+  const _availableVendors = getAvailableVendors();
+
+  // Get competitors filtered by vendor
+  const getFilteredCompetitors = () => {
+    if (selectedVendor === "all") return allCompetitors;
+
+    return allCompetitors
+      .filter((competitor) =>
+        competitor.mentions.some(
+          (mention) =>
+            mention.source?.queryExecution?.model?.vendor === selectedVendor,
+        ),
+      )
+      .map((competitor) => ({
+        ...competitor,
+        mentions: competitor.mentions.filter(
+          (mention) =>
+            mention.source?.queryExecution?.model?.vendor === selectedVendor,
+        ),
+      }));
+  };
+
+  const filteredCompetitors = getFilteredCompetitors();
+
+  // Get filtered data based on selected execution and vendor
+  const getFilteredData = () => {
+    let filteredExecutions = executions;
+
+    // Filter by vendor if not "all"
+    if (selectedVendor !== "all") {
+      filteredExecutions = executions
+        .map((execution) => ({
+          ...execution,
+          queryExecutions: execution.queryExecutions.filter(
+            (qe) => qe.model?.vendor === selectedVendor,
+          ),
+        }))
+        .filter((execution) => execution.queryExecutions.length > 0);
+    }
+
+    // If specific execution is selected, filter to that execution
+    if (selectedExecutionId) {
+      const selectedExecution = filteredExecutions.find(
+        (e) => e.id === selectedExecutionId,
+      );
+      if (!selectedExecution) return { executions: [], sources: allSources };
+
+      const executionQueryIds = selectedExecution.queryExecutions.map(
+        (qe) => qe.id,
+      );
+      const sources = allSources.filter(
+        (source) =>
+          source.queryExecutionId &&
+          executionQueryIds.includes(source.queryExecutionId),
+      );
+      return { executions: [selectedExecution], sources };
+    }
+
+    // Filter sources based on vendor
+    let sources = allSources;
+    if (selectedVendor !== "all") {
+      const vendorQueryExecutionIds = filteredExecutions.flatMap((execution) =>
+        execution.queryExecutions.map((qe) => qe.id),
+      );
+      sources = allSources.filter(
+        (source) =>
+          source.queryExecutionId &&
+          vendorQueryExecutionIds.includes(source.queryExecutionId),
+      );
+    }
+
+    return { executions: filteredExecutions, sources };
+  };
+
+  const { executions: filteredExecutions, sources: filteredSources } =
+    getFilteredData();
+
+  const isFiltered = selectedExecutionId !== null || selectedVendor !== "all";
 
   // Calculate stats
-  const totalExecutions = executions.length;
-  const totalSources = isFiltered ? filteredSources.length : allSources.length;
-  const totalCompetitors = competitors.length;
+  const totalExecutions = filteredExecutions.length;
+  const totalSources = filteredSources.length;
+  const totalCompetitors = filteredCompetitors.length;
   const _totalDomains = domains.length;
-  const displayedQueries = isFiltered
-    ? executions.find((e) => e.id === selectedExecutionId)?.queryExecutions
-        .length || 0
-    : totalQueries;
+  const displayedQueries = filteredExecutions.reduce(
+    (sum, execution) => sum + execution.queryExecutions.length,
+    0,
+  );
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -87,13 +175,19 @@ export default function ResultsClient({
           Summary of analysis results for {project.name}
           {isFiltered && (
             <span className="ml-2">
-              • Filtered by execution #{selectedExecutionId?.slice(-8)}
+              {selectedVendor !== "all" &&
+                `• Filtered by vendor: ${selectedVendor}`}
+              {selectedExecutionId &&
+                ` • Execution #${selectedExecutionId?.slice(-8)}`}
               <button
                 type="button"
-                onClick={() => setSelectedExecutionId(null)}
+                onClick={() => {
+                  setSelectedExecutionId(null);
+                  setSelectedVendor("all");
+                }}
                 className="ml-2 text-blue-600 hover:underline"
               >
-                (Clear filter)
+                (Clear filters)
               </button>
             </span>
           )}
@@ -145,6 +239,22 @@ export default function ResultsClient({
         </Card>
       </div>
 
+      {/* Vendor Tabs */}
+      <div className="mb-8">
+        <Tabs value={selectedVendor} onValueChange={setSelectedVendor}>
+          <TabsList className="grid w-fit grid-cols-5">
+            <TabsTrigger value="all">All Vendors</TabsTrigger>
+            <TabsTrigger value="anthropic">Anthropic</TabsTrigger>
+            <TabsTrigger value="google">Google</TabsTrigger>
+            <TabsTrigger value="openai">OpenAI</TabsTrigger>
+            <TabsTrigger value="am">Agile Monkeys</TabsTrigger>
+          </TabsList>
+          <TabsContent value={selectedVendor} className="mt-6">
+            {/* Content will be rendered below */}
+          </TabsContent>
+        </Tabs>
+      </div>
+
       {/* Recent Executions */}
       <div className="grid gap-8 lg:grid-cols-2">
         <Card>
@@ -153,7 +263,7 @@ export default function ResultsClient({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {executions.map((execution) => (
+              {filteredExecutions.map((execution) => (
                 <button
                   type="button"
                   onKeyDown={() => {
@@ -279,7 +389,7 @@ export default function ResultsClient({
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {competitors.map((competitor, index) => (
+              {filteredCompetitors.map((competitor, index) => (
                 <div
                   key={competitor.id}
                   className="flex items-center justify-between"
@@ -293,9 +403,12 @@ export default function ResultsClient({
                     </Badge>
                     <p className="font-medium text-sm">{competitor.name}</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" className="text-xs">
-                      {competitor.mentionCount || 0} mentions
+                      {selectedVendor === "all"
+                        ? competitor.mentionCount || 0
+                        : competitor.mentions.length}{" "}
+                      mentions
                     </Badge>
                     {competitor.lastMentionDate && (
                       <Badge variant="outline" className="text-xs">
@@ -304,6 +417,52 @@ export default function ResultsClient({
                         ).toLocaleDateString()}
                       </Badge>
                     )}
+                    {/* Show unique models for this competitor */}
+                    {(() => {
+                      const uniqueModels = Array.from(
+                        new Set(
+                          competitor.mentions
+                            .map((m) => m.source?.queryExecution?.model)
+                            .filter(Boolean)
+                            .map((model) => `${model?.vendor}-${model?.name}`),
+                        ),
+                      );
+                      return uniqueModels.slice(0, 2).map((modelKey) => {
+                        const model = competitor.mentions.find(
+                          (m) =>
+                            m.source?.queryExecution?.model &&
+                            `${m.source.queryExecution.model.vendor}-${m.source.queryExecution.model.name}` ===
+                              modelKey,
+                        )?.source?.queryExecution?.model;
+                        return model ? (
+                          <Badge
+                            key={modelKey}
+                            variant="outline"
+                            className="text-xs"
+                            style={{
+                              backgroundColor: model.color || undefined,
+                            }}
+                          >
+                            {model.vendor}
+                          </Badge>
+                        ) : null;
+                      });
+                    })()}
+                    {(() => {
+                      const uniqueModels = Array.from(
+                        new Set(
+                          competitor.mentions
+                            .map((m) => m.source?.queryExecution?.model)
+                            .filter(Boolean)
+                            .map((model) => `${model?.vendor}-${model?.name}`),
+                        ),
+                      );
+                      return uniqueModels.length > 2 ? (
+                        <Badge variant="outline" className="text-xs">
+                          +{uniqueModels.length - 2} more
+                        </Badge>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               ))}

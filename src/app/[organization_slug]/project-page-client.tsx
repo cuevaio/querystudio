@@ -20,7 +20,7 @@ export function ProjectPageClient({
 
     try {
       const response = await fetch(
-        "https://theam-learning.app.n8n.cloud/webhook/webhook-trigger",
+        "https://theam-learning.app.n8n.cloud/webhook/53c8fa7a-c30b-487c-a566-f0f3cfdbc3b5",
         {
           method: "POST",
           headers: {
@@ -28,7 +28,11 @@ export function ProjectPageClient({
           },
           body: JSON.stringify({
             project_id: projectId,
-            model: "gpt-4o",
+            models: [
+              "chatgpt-4o-latest",
+              "claude-sonnet-4-20250514",
+              "google-ai-overview",
+            ],
           }),
         },
       );

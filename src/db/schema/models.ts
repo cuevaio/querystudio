@@ -8,6 +8,7 @@ export const models = pgTable("models", {
   id: uuid().defaultRandom().primaryKey().notNull(),
   name: text().notNull(),
   model: text(),
+  vendor: text(),
   color: text(),
 });
 

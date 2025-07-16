@@ -1,0 +1,43 @@
+{
+  "response": "An AI-first approach in engineering involves integrating AI as a core component throughout the software development lifecycle, rather than just using AI tools as add-ons. This includes implementing AI-powered tools to accelerate delivery, eliminate inefficiencies, and enhance productivity across development, testing, deployment, and operations. Key aspects include specification-driven development with AI-generated code, context-aware development leveraging AI's understanding of project contexts, AI agents as active participants in software creation, and human oversight by design. The approach emphasizes automating routine tasks like code generation, testing, and bug fixes while enabling developers to focus on more creative problem-solving. Organizations adopting this approach have seen cycle time reductions of 40%, improved deployment frequencies, and engineering cost optimizations of 20-35%.",
+  "mentions": [
+    "Thoughtworks",
+    "GitHub",
+    "Microsoft",
+    "NVIDIA",
+    "Cognition",
+    "BCG"
+  ],
+  "sources": [
+    {
+      "title": "AI-first software engineering: Development, evolved",
+      "url": "https://www.thoughtworks.com/perspectives/edition36-ai-first-software-engineering/article",
+      "domain": "thoughtworks.com",
+      "mentions": ["Thoughtworks", "GitHub"]
+    },
+    {
+      "title": "AI-first software engineering transformation | Thoughtworks",
+      "url": "https://www.thoughtworks.com/what-we-do/ai-first-software-engineering-transformation",
+      "domain": "thoughtworks.com",
+      "mentions": ["Thoughtworks"]
+    },
+    {
+      "title": "Understanding AI-first development technologies: A new era in software engineering - Blueprint for A.I.",
+      "url": "https://blueprintforai.cio.com/ai-first-app-development-key-considerations-and-best-practices/understanding-ai-first-development-technologies-a-new-era-in-software-engineering/",
+      "domain": "blueprintforai.cio.com",
+      "mentions": ["Microsoft", "NVIDIA"]
+    },
+    {
+      "title": "AI Native Dev: Shaping the Future of AI-First Software Development - DevOps.com",
+      "url": "https://devops.com/ai-native-dev-shaping-the-future-of-ai-first-software-development/",
+      "domain": "devops.com",
+      "mentions": []
+    },
+    {
+      "title": "How Companies Can Prepare for an AI-First Future | BCG",
+      "url": "https://www.bcg.com/publications/2025/how-companies-can-prepare-for-ai-first-future",
+      "domain": "bcg.com",
+      "mentions": ["BCG"]
+    }
+  ]
+}
