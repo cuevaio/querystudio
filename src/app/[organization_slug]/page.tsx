@@ -1,11 +1,14 @@
 import { and, eq } from "drizzle-orm";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/db";
 import { projects, projectsUsers } from "@/db/schema";
 import { userId } from "@/lib/user-id";
+import { cn } from "@/lib/utils";
 import { ProjectPageClient } from "./project-page-client";
 
 interface OrganizationPageProps {
@@ -85,9 +88,18 @@ export default async function OrganizationPage({
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold text-xl">Topics</h2>
-          <Badge variant="outline">
-            {org.topics.length} topic{org.topics.length !== 1 ? "s" : ""}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline">
+              {org.topics.length} topic{org.topics.length !== 1 ? "s" : ""}
+            </Badge>
+            <Link
+              href={`/${organization_slug}/new`}
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Topic
+            </Link>
+          </div>
         </div>
 
         {org.topics.length === 0 ? (

@@ -2,11 +2,9 @@
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { db } from "@/db";
-import { projectsUsers, topics } from "@/db/schema";
+import { projects, projectsUsers, topics } from "@/db/schema";
 import { userId } from "@/lib/user-id";
 
 // Create Topic Action
@@ -109,9 +107,10 @@ export type UpdateTopicActionState = {
   input: {
     topicId: string;
     name: string;
+    description: string;
   };
   output:
-    | { success: true; data: { id: string; name: string } }
+    | { success: true; data: { id: string; name: string; description: string } }
     | { success: false; error?: string };
 };
 
@@ -119,15 +118,16 @@ export async function updateTopicAction(
   _prev: UpdateTopicActionState,
   formData: FormData,
 ): Promise<UpdateTopicActionState> {
-  let slug: string | undefined;
   const raw = {
     topicId: formData.get("topicId") as string,
     name: formData.get("name") as string,
+    description: formData.get("description") as string,
   };
 
   const schema = z.object({
     topicId: z.string().min(1, "Topic ID is required"),
     name: z.string().min(1, "Topic name is required"),
+    description: z.string().min(1, "Description is required"),
   });
 
   const parsed = schema.safeParse(raw);
@@ -140,26 +140,12 @@ export async function updateTopicAction(
   if (!parsed.success) {
     state.output = {
       success: false,
-      error: "Invalid input data",
+      error: "Invalid input",
     };
     return state;
   }
 
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      state.output = {
-        success: false,
-        error: "Unauthorized",
-      };
-      return state;
-    }
-
-    const userId = session.user.id;
-
     const _topic = await db.query.topics.findFirst({
       where: eq(topics.id, parsed.data.topicId),
       with: {
@@ -190,9 +176,6 @@ export async function updateTopicAction(
         eq(projectsUsers.userId, userId),
         eq(projectsUsers.projectId, projectId),
       ),
-      with: {
-        project: true,
-      },
     });
 
     if (!_projectUser) {
@@ -203,29 +186,37 @@ export async function updateTopicAction(
       return state;
     }
 
-    const { project } = _topic;
-    slug = project?.slug || undefined;
-
-    await db
+    // Update the topic and get the updated values
+    const updatedTopics = await db
       .update(topics)
       .set({
         name: parsed.data.name,
+        description: parsed.data.description,
       })
-      .where(eq(topics.id, parsed.data.topicId));
+      .where(eq(topics.id, parsed.data.topicId))
+      .returning();
+
+    const updatedTopic = updatedTopics[0];
 
     state.output = {
       success: true,
-      data: { id: parsed.data.topicId, name: parsed.data.name },
+      data: {
+        id: updatedTopic.id,
+        name: updatedTopic.name,
+        description: updatedTopic.description || "",
+      },
     };
+
+    // Revalidate pages
+    if (_topic.project.slug) {
+      revalidatePath(`/${_topic.project.slug}`);
+      revalidatePath(`/${_topic.project.slug}/${parsed.data.topicId}`);
+    }
   } catch (err) {
     state.output = {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to update topic",
+      error: err instanceof Error ? err.message : "Unknown error",
     };
-  }
-
-  if (slug) {
-    revalidatePath(`/${slug}`);
   }
 
   return state;
@@ -245,7 +236,6 @@ export async function deleteTopicAction(
   _prev: DeleteTopicActionState,
   formData: FormData,
 ): Promise<DeleteTopicActionState> {
-  let slug: string | undefined;
   const raw = {
     topicId: formData.get("topicId") as string,
   };
@@ -264,26 +254,12 @@ export async function deleteTopicAction(
   if (!parsed.success) {
     state.output = {
       success: false,
-      error: "Invalid input data",
+      error: "Invalid input",
     };
     return state;
   }
 
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      state.output = {
-        success: false,
-        error: "Unauthorized",
-      };
-      return state;
-    }
-
-    const userId = session.user.id;
-
     const _topic = await db.query.topics.findFirst({
       where: eq(topics.id, parsed.data.topicId),
       with: {
@@ -314,9 +290,6 @@ export async function deleteTopicAction(
         eq(projectsUsers.userId, userId),
         eq(projectsUsers.projectId, projectId),
       ),
-      with: {
-        project: true,
-      },
     });
 
     if (!_projectUser) {
@@ -327,24 +300,123 @@ export async function deleteTopicAction(
       return state;
     }
 
-    const { project } = _topic;
-    slug = project?.slug || undefined;
-
     await db.delete(topics).where(eq(topics.id, parsed.data.topicId));
 
     state.output = {
       success: true,
       data: { id: parsed.data.topicId },
     };
+
+    // Revalidate the organization page
+    if (_topic.project.slug) {
+      revalidatePath(`/${_topic.project.slug}`);
+    }
   } catch (err) {
     state.output = {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to delete topic",
+      error: err instanceof Error ? err.message : "Unknown error",
     };
   }
 
-  if (slug) {
-    revalidatePath(`/${slug}`);
+  return state;
+}
+
+// Create Topic from Organization Slug Action
+export type CreateTopicFromSlugActionState = {
+  input: {
+    organizationSlug: string;
+    name: string;
+    description: string;
+  };
+  output:
+    | { success: true; data: { id: string; name: string } }
+    | { success: false; error?: string };
+};
+
+export async function createTopicFromSlugAction(
+  _prev: CreateTopicFromSlugActionState,
+  formData: FormData,
+): Promise<CreateTopicFromSlugActionState> {
+  const raw = {
+    organizationSlug: formData.get("organizationSlug") as string,
+    name: formData.get("name") as string,
+    description: formData.get("description") as string,
+  };
+
+  const schema = z.object({
+    organizationSlug: z.string().min(1, "Organization slug is required"),
+    name: z.string().min(1, "Topic name is required"),
+    description: z.string().min(1, "Description is required"),
+  });
+
+  const parsed = schema.safeParse(raw);
+
+  const state: CreateTopicFromSlugActionState = {
+    input: raw,
+    output: { success: false },
+  };
+
+  if (!parsed.success) {
+    state.output = {
+      success: false,
+      error: "Invalid input",
+    };
+    return state;
+  }
+
+  try {
+    // Get project by organization slug
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.slug, parsed.data.organizationSlug),
+    });
+
+    if (!project) {
+      state.output = {
+        success: false,
+        error: "Organization not found",
+      };
+      return state;
+    }
+
+    // Check if user is member of organization
+    const userMembership = await db.query.projectsUsers.findFirst({
+      where: and(
+        eq(projectsUsers.userId, userId),
+        eq(projectsUsers.projectId, project.id),
+      ),
+    });
+
+    if (!userMembership) {
+      state.output = {
+        success: false,
+        error: "Unauthorized",
+      };
+      return state;
+    }
+
+    const insertedTopics = await db
+      .insert(topics)
+      .values({
+        projectId: project.id,
+        name: parsed.data.name,
+        description: parsed.data.description,
+      })
+      .returning();
+
+    const topicId = insertedTopics[0].id;
+
+    state.output = {
+      success: true,
+      data: { id: topicId, name: parsed.data.name },
+    };
+
+    // Revalidate
+    revalidatePath(`/${parsed.data.organizationSlug}`);
+  } catch (err) {
+    state.output = {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
   }
 
   return state;

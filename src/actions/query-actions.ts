@@ -2,9 +2,7 @@
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { z } from "zod";
-import { auth } from "@/auth";
 import { db } from "@/db";
 import { projectsUsers, queries } from "@/db/schema";
 import { userId } from "@/lib/user-id";
@@ -171,20 +169,6 @@ export async function updateQueryAction(
   }
 
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      state.output = {
-        success: false,
-        error: "Unauthorized",
-      };
-      return state;
-    }
-
-    const userId = session.user.id;
-
     const _query = await db.query.queries.findFirst({
       where: eq(queries.id, parsed.data.queryId),
       with: {
@@ -292,20 +276,6 @@ export async function deleteQueryAction(
   }
 
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session?.user?.id) {
-      state.output = {
-        success: false,
-        error: "Unauthorized",
-      };
-      return state;
-    }
-
-    const userId = session.user.id;
-
     const _query = await db.query.queries.findFirst({
       where: eq(queries.id, parsed.data.queryId),
       with: {
