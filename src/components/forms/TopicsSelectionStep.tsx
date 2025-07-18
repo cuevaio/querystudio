@@ -328,7 +328,9 @@ export function TopicsSelectionStep() {
               ] as string | undefined;
               const queries = topics?.[
                 `queries_${i + 1}` as keyof typeof topics
-              ] as { query: string; companySpecific: boolean }[] | undefined;
+              ] as
+                | { text: string; queryType: "product" | "sector" }[]
+                | undefined;
 
               if (!topic) return null;
 
@@ -365,11 +367,11 @@ export function TopicsSelectionStep() {
                         if (!query) return null;
                         return (
                           <div
-                            key={`${query.query}-${index}`}
+                            key={`${query.text}-${index}`}
                             className="rounded-md bg-muted p-3 text-muted-foreground text-sm"
                           >
-                            {query.query}
-                            {query.companySpecific && (
+                            {query.text}
+                            {query.queryType === "product" && (
                               <Badge
                                 variant="outline"
                                 className="ml-2 text-muted-foreground text-xs"
