@@ -306,12 +306,8 @@ export async function deleteTopicAction(
       success: true,
       data: { id: parsed.data.topicId },
     };
-
-    // Revalidate the organization page
-    if (_topic.project.slug) {
-      revalidatePath(`/${_topic.project.slug}`);
-    }
   } catch (err) {
+    console.error(err);
     state.output = {
       success: false,
       error: err instanceof Error ? err.message : "Unknown error",
