@@ -59,22 +59,10 @@ export default async function OrganizationPage({
     <div className="container mx-auto px-4 py-16">
       {/* Organization Header */}
       <div className="mb-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4">
           <div>
             <h1 className="mb-2 font-bold text-3xl">{org.name}</h1>
             <p className="mb-4 text-muted-foreground">{org.description}</p>
-          </div>
-          <div className="flex gap-2">
-            <Link
-              href={`/${organization_slug}/results`}
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground text-sm hover:bg-primary/90"
-            >
-              View Results
-            </Link>
-            <ProjectPageClient
-              projectId={org.id}
-              organizationSlug={organization_slug}
-            />
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -82,6 +70,19 @@ export default async function OrganizationPage({
           <Badge variant="secondary">{org.region}</Badge>
           <Badge variant="secondary">{org.language}</Badge>
         </div>
+      </div>
+
+      <div className="mb-4 flex gap-2">
+        <Link
+          href={`/${organization_slug}/results`}
+          className={cn(buttonVariants({ variant: "outline" }))}
+        >
+          View Results
+        </Link>
+        <ProjectPageClient
+          projectId={org.id}
+          organizationSlug={organization_slug}
+        />
       </div>
 
       {/* Topics Grid */}

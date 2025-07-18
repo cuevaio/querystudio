@@ -30,24 +30,6 @@ export function Header({ user }: HeaderProps) {
           <span className="font-bold text-xl">QueryStudio</span>
         </Link>
 
-        {/* Navigation */}
-        {user && (
-          <nav className="hidden items-center space-x-6 md:flex">
-            <Link
-              href="/"
-              className="font-medium text-sm transition-colors hover:text-primary"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/projects"
-              className="font-medium text-muted-foreground text-sm transition-colors hover:text-primary"
-            >
-              Projects
-            </Link>
-          </nav>
-        )}
-
         {/* User Menu */}
         <div className="flex items-center space-x-4">
           {user ? (

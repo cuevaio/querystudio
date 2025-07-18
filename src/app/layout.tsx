@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { eq } from "drizzle-orm";
-import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { Providers } from "@/components/providers";
 import { db } from "@/db";
@@ -43,7 +42,6 @@ export default async function RootLayout({
           <div className="flex min-h-screen flex-col">
             <Header user={user || null} />
             <main className="flex-1 bg-background">{children}</main>
-            <Footer />
           </div>
         </Providers>
       </body>

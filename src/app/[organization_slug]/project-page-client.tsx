@@ -59,7 +59,7 @@ export function ProjectPageClient({
     <Button
       onClick={handleRunAnalysis}
       disabled={isRunningAnalysis}
-      className="bg-blue-600 hover:bg-blue-700"
+      variant="secondary"
     >
       {isRunningAnalysis ? "Running Analysis..." : "Run Analysis"}
     </Button>
