@@ -32,6 +32,7 @@ export function ProjectPageClient({
               "chatgpt-4o-latest",
               "claude-sonnet-4-20250514",
               "google-ai-overview",
+              "aifindr",
             ],
           }),
         },
