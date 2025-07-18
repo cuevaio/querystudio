@@ -13,6 +13,8 @@ interface TopicPageProps {
   }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function TopicPage({ params }: TopicPageProps) {
   const { organization_slug, topic_id } = await params;
 

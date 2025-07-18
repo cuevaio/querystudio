@@ -19,6 +19,8 @@ interface QueryPageProps {
   }>;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function QueryPage({ params }: QueryPageProps) {
   const { organization_slug, topic_id, query_id } = await params;
 
