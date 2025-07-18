@@ -11,6 +11,8 @@ import {
   type UpdateTopicActionState,
   updateTopicAction,
 } from "@/actions/topic-actions";
+import { CreateQueryModal } from "@/components/create-query-modal";
+import { QueryActionsMenu } from "@/components/query-actions-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +41,7 @@ interface TopicPageClientProps {
       id: string;
       name: string;
       slug: string | null;
+      description?: string | null;
     } | null;
     queries: Array<{
       id: string;
@@ -53,8 +56,9 @@ export function TopicPageClient({
   topicData,
   organizationSlug,
 }: TopicPageClientProps) {
-  const [isEditing, setIsEditing] = React.useState(false);
   const router = useRouter();
+  const [isEditing, setIsEditing] = React.useState(false);
+
   // Track the current displayed values (these will update when server action succeeds)
   const [currentName, setCurrentName] = React.useState(topicData.name);
   const [currentDescription, setCurrentDescription] = React.useState(
@@ -238,53 +242,78 @@ export function TopicPageClient({
 
         {/* Queries Section */}
         <div className="space-y-4">
-          <h2 className="font-semibold text-xl">Queries</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-xl">Queries</h2>
+            <CreateQueryModal
+              topicId={topicData.id}
+              projectId={topicData.projectId || ""}
+              organizationSlug={organizationSlug}
+              companyName={topicData.project?.name || ""}
+              topicName={currentName}
+              topicDescription={currentDescription}
+              existingQueries={topicData.queries}
+              companyDescription={topicData.project?.description || undefined}
+            />
+          </div>
 
           {topicData.queries.length === 0 ? (
             <Card>
               <CardContent className="py-8">
                 <div className="text-center text-muted-foreground">
                   <p>No queries found for this topic.</p>
+                  <p className="mt-2 text-sm">
+                    Click "Add Query" to create your first query.
+                  </p>
                 </div>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
               {topicData.queries.map((queryItem, index) => (
-                <Link
+                <Card
                   key={queryItem.id}
-                  href={`/${organizationSlug}/${topicData.id}/${queryItem.id}`}
-                  className="block transition-transform hover:scale-[1.01]"
+                  className="border-border/50 bg-card/50 backdrop-blur-sm transition-shadow hover:shadow-lg"
                 >
-                  <Card className="border-border/50 bg-card/50 backdrop-blur-sm transition-shadow hover:shadow-lg">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="font-medium text-lg">
-                            {queryItem.text}
-                          </CardTitle>
-                        </div>
-                        <div className="ml-4 flex items-center gap-2">
-                          <Badge
-                            variant={
-                              queryItem.queryType === "product"
-                                ? "default"
-                                : "secondary"
-                            }
-                            className="text-xs"
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="mb-2 flex items-center gap-2">
+                          <Link
+                            href={`/${organizationSlug}/${topicData.id}/${queryItem.id}`}
+                            className="hover:underline"
                           >
-                            {queryItem.queryType === "product"
-                              ? "Product"
-                              : "Sector"}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            #{index + 1}
-                          </Badge>
+                            <CardTitle className="font-medium text-lg">
+                              {queryItem.text}
+                            </CardTitle>
+                          </Link>
                         </div>
                       </div>
-                    </CardHeader>
-                  </Card>
-                </Link>
+                      <div className="ml-4 flex items-center gap-2">
+                        <Badge
+                          variant={
+                            queryItem.queryType === "product"
+                              ? "default"
+                              : "secondary"
+                          }
+                          className="text-xs"
+                        >
+                          {queryItem.queryType === "product"
+                            ? "Company"
+                            : "Market"}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          #{index + 1}
+                        </Badge>
+                        <QueryActionsMenu
+                          queryId={queryItem.id}
+                          queryText={queryItem.text}
+                          organizationSlug={organizationSlug}
+                          topicId={topicData.id}
+                        />
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
               ))}
             </div>
           )}
@@ -310,7 +339,7 @@ export function TopicPageClient({
                 </span>
               </div>
               <div>
-                <span className="font-medium">Product Queries:</span>
+                <span className="font-medium">Company Queries:</span>
                 <span className="ml-2 text-muted-foreground">
                   {
                     topicData.queries.filter((q) => q.queryType === "product")
@@ -319,7 +348,7 @@ export function TopicPageClient({
                 </span>
               </div>
               <div>
-                <span className="font-medium">Sector Queries:</span>
+                <span className="font-medium">Market Queries:</span>
                 <span className="ml-2 text-muted-foreground">
                   {
                     topicData.queries.filter((q) => q.queryType === "sector")

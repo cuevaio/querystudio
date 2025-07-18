@@ -13,9 +13,10 @@ export type CreateQueryActionState = {
     topicId: string;
     projectId: string;
     text: string;
+    queryType: string;
   };
   output:
-    | { success: true; data: { id: string; text: string } }
+    | { success: true; data: { id: string; text: string; queryType: string } }
     | { success: false; error?: string };
 };
 
@@ -23,17 +24,20 @@ export async function createQueryAction(
   _prev: CreateQueryActionState,
   formData: FormData,
 ): Promise<CreateQueryActionState> {
-  let slug: string | undefined;
   const raw = {
     topicId: formData.get("topicId") as string,
     projectId: formData.get("projectId") as string,
     text: formData.get("text") as string,
+    queryType: formData.get("queryType") as string,
   };
 
   const schema = z.object({
     topicId: z.string().min(1, "Topic ID is required"),
     projectId: z.string().min(1, "Project ID is required"),
     text: z.string().min(1, "Query text is required"),
+    queryType: z.enum(["product", "sector"], {
+      required_error: "Query type is required",
+    }),
   });
 
   const parsed = schema.safeParse(raw);
@@ -46,31 +50,7 @@ export async function createQueryAction(
   if (!parsed.success) {
     state.output = {
       success: false,
-      error: "Invalid input data",
-    };
-    return state;
-  }
-
-  if (!parsed.data.projectId) {
-    state.output = {
-      success: false,
-      error: "Project ID is required",
-    };
-    return state;
-  }
-
-  if (!parsed.data.topicId) {
-    state.output = {
-      success: false,
-      error: "Topic ID is required",
-    };
-    return state;
-  }
-
-  if (!parsed.data.text) {
-    state.output = {
-      success: false,
-      error: "Query text is required",
+      error: "Invalid input",
     };
     return state;
   }
@@ -94,34 +74,37 @@ export async function createQueryAction(
       return state;
     }
 
-    const { project } = _projectUser;
-    slug = project.slug || undefined;
-
     const insertedQueries = await db
       .insert(queries)
       .values({
         topicId: parsed.data.topicId,
         projectId: parsed.data.projectId,
         text: parsed.data.text,
-        queryType: "sector", // Default to sector query
+        queryType: parsed.data.queryType,
       })
       .returning();
 
-    const queryId = insertedQueries[0].id;
+    const query = insertedQueries[0];
 
     state.output = {
       success: true,
-      data: { id: queryId, text: parsed.data.text },
+      data: {
+        id: query.id,
+        text: query.text,
+        queryType: query.queryType || "",
+      },
     };
+
+    // Revalidate pages
+    if (_projectUser.project.slug) {
+      revalidatePath(`/${_projectUser.project.slug}`);
+      revalidatePath(`/${_projectUser.project.slug}/${parsed.data.topicId}`);
+    }
   } catch (err) {
     state.output = {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to create query",
+      error: err instanceof Error ? err.message : "Unknown error",
     };
-  }
-
-  if (slug) {
-    revalidatePath(`/${slug}`);
   }
 
   return state;
@@ -142,7 +125,6 @@ export async function updateQueryAction(
   _prev: UpdateQueryActionState,
   formData: FormData,
 ): Promise<UpdateQueryActionState> {
-  let slug: string | undefined;
   const raw = {
     queryId: formData.get("queryId") as string,
     text: formData.get("text") as string,
@@ -163,7 +145,7 @@ export async function updateQueryAction(
   if (!parsed.success) {
     state.output = {
       success: false,
-      error: "Invalid input data",
+      error: "Invalid input",
     };
     return state;
   }
@@ -189,9 +171,6 @@ export async function updateQueryAction(
         eq(projectsUsers.userId, userId),
         eq(projectsUsers.projectId, _query.projectId),
       ),
-      with: {
-        project: true,
-      },
     });
 
     if (!_projectUser) {
@@ -202,36 +181,31 @@ export async function updateQueryAction(
       return state;
     }
 
-    if (!_query.project) {
-      state.output = {
-        success: false,
-        error: "Project not found",
-      };
-      return state;
-    }
-
-    slug = _query.project?.slug || undefined;
-
-    await db
+    const updatedQueries = await db
       .update(queries)
       .set({
         text: parsed.data.text,
       })
-      .where(eq(queries.id, parsed.data.queryId));
+      .where(eq(queries.id, parsed.data.queryId))
+      .returning();
+
+    const updatedQuery = updatedQueries[0];
 
     state.output = {
       success: true,
-      data: { id: parsed.data.queryId, text: parsed.data.text },
+      data: { id: updatedQuery.id, text: updatedQuery.text },
     };
+
+    // Revalidate pages
+    if (_query.project?.slug) {
+      revalidatePath(`/${_query.project.slug}`);
+      revalidatePath(`/${_query.project.slug}/${_query.topicId}`);
+    }
   } catch (err) {
     state.output = {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to update query",
+      error: err instanceof Error ? err.message : "Unknown error",
     };
-  }
-
-  if (slug) {
-    revalidatePath(`/${slug}`);
   }
 
   return state;
@@ -251,7 +225,6 @@ export async function deleteQueryAction(
   _prev: DeleteQueryActionState,
   formData: FormData,
 ): Promise<DeleteQueryActionState> {
-  let slug: string | undefined;
   const raw = {
     queryId: formData.get("queryId") as string,
   };
@@ -270,7 +243,7 @@ export async function deleteQueryAction(
   if (!parsed.success) {
     state.output = {
       success: false,
-      error: "Invalid input data",
+      error: "Invalid input",
     };
     return state;
   }
@@ -291,23 +264,11 @@ export async function deleteQueryAction(
       return state;
     }
 
-    if (!_query.project) {
-      state.output = {
-        success: false,
-        error: "Project not found",
-      };
-      return state;
-    }
-
-    const projectId = _query.project.id;
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),
-        eq(projectsUsers.projectId, projectId),
+        eq(projectsUsers.projectId, _query.projectId),
       ),
-      with: {
-        project: true,
-      },
     });
 
     if (!_projectUser) {
@@ -318,24 +279,23 @@ export async function deleteQueryAction(
       return state;
     }
 
-    const { project } = _query;
-    slug = project?.slug || undefined;
-
     await db.delete(queries).where(eq(queries.id, parsed.data.queryId));
 
     state.output = {
       success: true,
       data: { id: parsed.data.queryId },
     };
+
+    // Revalidate pages
+    if (_query.project?.slug) {
+      revalidatePath(`/${_query.project.slug}`);
+      revalidatePath(`/${_query.project.slug}/${_query.topicId}`);
+    }
   } catch (err) {
     state.output = {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to delete query",
+      error: err instanceof Error ? err.message : "Unknown error",
     };
-  }
-
-  if (slug) {
-    revalidatePath(`/${slug}`);
   }
 
   return state;

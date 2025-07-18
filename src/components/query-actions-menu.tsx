@@ -1,10 +1,14 @@
 "use client";
 
 import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import React, { useActionState, useState, useTransition } from "react";
+import React from "react";
 import { toast } from "sonner";
-import { deleteQueryAction, updateQueryAction } from "@/actions/query-actions";
+import {
+  type DeleteQueryActionState,
+  deleteQueryAction,
+  type UpdateQueryActionState,
+  updateQueryAction,
+} from "@/actions/query-actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,82 +32,55 @@ import { Label } from "@/components/ui/label";
 
 interface QueryActionsMenuProps {
   queryId: string;
+  queryText: string;
   organizationSlug: string;
   topicId: string;
 }
 
 export function QueryActionsMenu({
   queryId,
+  queryText,
   organizationSlug,
   topicId,
 }: QueryActionsMenuProps) {
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [editValue, setEditValue] = useState("");
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
+  const [showEditDialog, setShowEditDialog] = React.useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
-  const [updateState, updateAction] = useActionState(updateQueryAction, {
-    input: { queryId: "", text: "" },
-    output: { success: false },
-  });
+  const [updateState, updateFormAction, isUpdating] = React.useActionState(
+    updateQueryAction,
+    {
+      input: { queryId: "", text: "" },
+      output: { success: false },
+    } as UpdateQueryActionState,
+  );
 
-  const [deleteState, deleteAction] = useActionState(deleteQueryAction, {
-    input: { queryId: "" },
-    output: { success: false },
-  });
+  const [deleteState, deleteFormAction, isDeleting] = React.useActionState(
+    deleteQueryAction,
+    {
+      input: { queryId: "" },
+      output: { success: false },
+    } as DeleteQueryActionState,
+  );
 
-  const handleEditClick = () => {
-    setShowEditDialog(true);
-    setEditValue("");
-  };
-
-  const handleDeleteClick = () => {
-    setShowDeleteDialog(true);
-  };
-
-  const handleUpdateSubmit = (formData: FormData) => {
-    if (!editValue.trim()) {
-      toast.error("Query content cannot be empty");
-      return;
-    }
-
-    startTransition(() => {
-      formData.append("queryId", queryId);
-      formData.append("content", editValue.trim());
-      updateAction(formData);
-    });
-  };
-
-  const handleDeleteConfirm = () => {
-    startTransition(() => {
-      const formData = new FormData();
-      formData.append("queryId", queryId);
-      deleteAction(formData);
-    });
-  };
-
-  // Handle successful update
+  // Handle update success
   React.useEffect(() => {
     if (updateState.output.success) {
       setShowEditDialog(false);
-      setEditValue("");
       toast.success("Query updated successfully");
-      router.refresh();
-    } else if (updateState.output.error) {
+    } else if (!updateState.output.success && updateState.output.error) {
       toast.error(updateState.output.error);
     }
-  }, [updateState.output, router]);
+  }, [updateState.output]);
 
-  // Handle successful deletion
+  // Handle delete success
   React.useEffect(() => {
     if (deleteState.output.success) {
+      setShowDeleteDialog(false);
       toast.success("Query deleted successfully");
-      router.push(`/${organizationSlug}/${topicId}`);
-    } else if (deleteState.output.error) {
+    } else if (!deleteState.output.success && deleteState.output.error) {
       toast.error(deleteState.output.error);
     }
-  }, [deleteState.output, router, organizationSlug, topicId]);
+  }, [deleteState.output]);
 
   return (
     <>
@@ -115,13 +92,13 @@ export function QueryActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleEditClick}>
+          <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Query
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onClick={handleDeleteClick}
+            onClick={() => setShowDeleteDialog(true)}
             className="text-destructive focus:text-destructive"
           >
             <Trash2 className="mr-2 h-4 w-4" />
@@ -140,26 +117,28 @@ export function QueryActionsMenu({
               specific.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <form action={handleUpdateSubmit}>
-            <div className="py-4">
-              <Label htmlFor="content">Query Content</Label>
+          <form action={updateFormAction} className="space-y-4">
+            <input type="hidden" name="queryId" value={queryId} />
+
+            <div>
+              <Label htmlFor="text">Query Text</Label>
               <Input
-                id="content"
-                name="content"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                placeholder="Enter query content..."
+                id="text"
+                name="text"
+                defaultValue={queryText}
+                placeholder="Enter query text..."
                 className="mt-2"
-                disabled={isPending}
+                disabled={isUpdating}
+                required
               />
             </div>
+
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                type="submit"
-                disabled={isPending || !editValue.trim()}
-              >
-                {isPending ? "Updating..." : "Update Query"}
+              <AlertDialogCancel disabled={isUpdating}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction type="submit" disabled={isUpdating}>
+                {isUpdating ? "Updating..." : "Update Query"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </form>
@@ -177,14 +156,17 @@ export function QueryActionsMenu({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              disabled={isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {isPending ? "Deleting..." : "Delete Query"}
-            </AlertDialogAction>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <form action={deleteFormAction} style={{ display: "inline" }}>
+              <input type="hidden" name="queryId" value={queryId} />
+              <AlertDialogAction
+                type="submit"
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? "Deleting..." : "Delete Query"}
+              </AlertDialogAction>
+            </form>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
