@@ -1,7 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { Output, streamText } from "ai";
 import { GENERATE_SINGLE_QUERY_PROMPT } from "@/prompts/generate-single-query";
-import { AiGeneratedQuerySchema } from "@/schemas/ai-generated-query";
+import { AIGeneratedQuerySchema } from "@/schemas/ai-generated-query";
 
 export const runtime = "edge";
 export const maxDuration = 60;
@@ -72,7 +72,7 @@ Generate 1 unique, customer-focused query for this topic that would be valuable 
       ],
       temperature: 0.8,
       experimental_output: Output.object({
-        schema: AiGeneratedQuerySchema,
+        schema: AIGeneratedQuerySchema,
       }),
     });
 

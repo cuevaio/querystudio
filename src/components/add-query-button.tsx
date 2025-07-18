@@ -28,7 +28,7 @@ export function AddQueryButton({
   const [isPending, startTransition] = useTransition();
 
   const [createState, createAction] = useActionState(createQueryAction, {
-    input: { topicId: "", projectId: "", text: "" },
+    input: { topicId: "", projectId: "", text: "", queryType: "" },
     output: { success: false },
   });
 

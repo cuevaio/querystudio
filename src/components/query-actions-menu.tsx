@@ -33,15 +33,11 @@ import { Label } from "@/components/ui/label";
 interface QueryActionsMenuProps {
   queryId: string;
   queryText: string;
-  organizationSlug: string;
-  topicId: string;
 }
 
 export function QueryActionsMenu({
   queryId,
   queryText,
-  organizationSlug,
-  topicId,
 }: QueryActionsMenuProps) {
   const [showEditDialog, setShowEditDialog] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);

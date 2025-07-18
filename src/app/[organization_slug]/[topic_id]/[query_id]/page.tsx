@@ -108,8 +108,7 @@ export default async function QueryPage({ params }: QueryPageProps) {
             <div className="ml-4">
               <QueryActionsMenu
                 queryId={queryData.id}
-                organizationSlug={organization_slug}
-                topicId={topic_id}
+                queryText={queryData.text}
               />
             </div>
           </div>

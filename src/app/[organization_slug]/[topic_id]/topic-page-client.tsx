@@ -307,8 +307,6 @@ export function TopicPageClient({
                         <QueryActionsMenu
                           queryId={queryItem.id}
                           queryText={queryItem.text}
-                          organizationSlug={organizationSlug}
-                          topicId={topicData.id}
                         />
                       </div>
                     </div>

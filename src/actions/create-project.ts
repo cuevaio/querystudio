@@ -124,8 +124,8 @@ export async function createProject(
         description: topicItem.description,
         projectId,
         queries: topicItem.queries.map((queryItem) => ({
-          text: queryItem.query,
-          queryType: queryItem.companySpecific ? "product" : "sector",
+          text: queryItem.text,
+          queryType: queryItem.queryType,
           projectId,
         })),
       };

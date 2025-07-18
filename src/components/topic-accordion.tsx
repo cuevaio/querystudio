@@ -97,7 +97,7 @@ function TopicItem({
   const [isPending, startTransition] = useTransition();
 
   const [updateState, updateAction] = useActionState(updateTopicAction, {
-    input: { topicId: "", name: "" },
+    input: { topicId: "", name: "", description: "" },
     output: { success: false },
   });
 

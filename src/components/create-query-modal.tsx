@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { AiGeneratedQuerySchema } from "@/schemas/ai-generated-query";
+import { AIGeneratedQuerySchema } from "@/schemas/ai-generated-query";
 
 interface CreateQueryModalProps {
   topicId: string;
@@ -73,7 +73,7 @@ export function CreateQueryModal({
     error: generationError,
   } = useObject({
     api: "/api/ai/completion/query",
-    schema: AiGeneratedQuerySchema,
+    schema: AIGeneratedQuerySchema,
   });
 
   // Handle create success
