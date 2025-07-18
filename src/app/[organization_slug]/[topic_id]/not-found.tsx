@@ -2,16 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-interface NotFoundPageProps {
-  params: Promise<{
-    organization_slug: string;
-    topic_id: string;
-  }>;
-}
-
-export default async function TopicNotFound({ params }: NotFoundPageProps) {
-  const { organization_slug } = await params;
-
+export default async function TopicNotFound() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
       <h1 className="mb-4 font-bold text-3xl">Topic Not Found</h1>
@@ -20,7 +11,7 @@ export default async function TopicNotFound({ params }: NotFoundPageProps) {
         access.
       </p>
       <div className="flex gap-4">
-        <Link href={`/${organization_slug}`}>
+        <Link href={`../`}>
           <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Go to Organization
