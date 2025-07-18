@@ -20,7 +20,7 @@ export function ProjectPageClient({
 
     try {
       const response = await fetch(
-        "https://theam-learning.app.n8n.cloud/webhook/53c8fa7a-c30b-487c-a566-f0f3cfdbc3b5",
+        "https://theam-learning.app.n8n.cloud/webhook/llmfindr",
         {
           method: "POST",
           headers: {
