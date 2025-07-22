@@ -306,6 +306,16 @@ export async function deleteTopicAction(
 
     const projectId = _topic.project.id;
 
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      throw new Error("User not found");
+    }
+
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),
@@ -393,6 +403,16 @@ export async function createTopicFromSlugAction(
         error: "Organization not found",
       };
       return state;
+    }
+
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      throw new Error("User not found");
     }
 
     // Check if user is member of organization
