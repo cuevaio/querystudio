@@ -1,14 +1,15 @@
 import { and, eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { QueryActionsMenu } from "@/components/query-actions-menu";
 import { QueryChatUI } from "@/components/query-chat-ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { db } from "@/db";
 import { projectsUsers, queries } from "@/db/schema";
-import { userId } from "@/lib/user-id";
 import { isValidUUID } from "@/lib/utils";
 
 interface QueryPageProps {
@@ -33,7 +34,16 @@ export default async function QueryPage({ params }: QueryPageProps) {
   // Validate that topic_id is a valid UUID
   if (!isValidUUID(topic_id)) {
     notFound();
-    return;
+  }
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  const userId = session?.user.id;
+
+  if (!userId) {
+    redirect("/signin");
   }
 
   const queryData = await db.query.queries.findFirst({
@@ -63,7 +73,7 @@ export default async function QueryPage({ params }: QueryPageProps) {
   // Check if user is member of organization
   const userMembership = await db.query.projectsUsers.findFirst({
     where: and(
-      eq(projectsUsers.userId, userId),
+      eq(projectsUsers.userId, userId ?? ""),
       eq(projectsUsers.projectId, queryData.projectId),
     ),
   });

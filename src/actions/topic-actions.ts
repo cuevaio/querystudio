@@ -2,10 +2,11 @@
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { db } from "@/db";
 import { projects, projectsUsers, topics } from "@/db/schema";
-import { userId } from "@/lib/user-id";
 
 // Create Topic Action
 export type CreateTopicActionState = {
@@ -52,6 +53,16 @@ export async function createTopicAction(
   }
 
   try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      throw new Error("User not found");
+    }
+
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),
@@ -146,6 +157,16 @@ export async function updateTopicAction(
   }
 
   try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      throw new Error("User not found");
+    }
+
     const _topic = await db.query.topics.findFirst({
       where: eq(topics.id, parsed.data.topicId),
       with: {

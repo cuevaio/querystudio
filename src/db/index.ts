@@ -12,18 +12,27 @@ declare global {
   var db: ReturnType<typeof drizzle<typeof schema>> | undefined;
 }
 
-if (!global.db) {
-  if (!global.sql) {
-    global.sql = postgres(process.env.DATABASE_URL);
-  }
-
-  global.db = drizzle({
-    client: global.sql,
-    schema: { ...schema, ...relations },
-    logger: false,
+// Create a fresh connection with better configuration
+const createConnection = () => {
+  const sql = postgres(process.env.DATABASE_URL!, {
+    max: 20, // Maximum number of connections
+    idle_timeout: 20,
+    connect_timeout: 60,
+    ssl: process.env.NODE_ENV === "production" ? "require" : "prefer",
   });
+
+  return drizzle({
+    client: sql,
+    schema: { ...schema, ...relations },
+    logger: process.env.NODE_ENV === "development",
+  });
+};
+
+if (!global.db) {
+  global.db = createConnection();
 }
 
 // biome-ignore lint/suspicious/noRedeclare: idk why but it works!
-export const db = global.db;
+// biome-ignore lint/style/noNonNullAssertion: aa aa
+export const db = global.db!;
 export * from "@/db/schema";

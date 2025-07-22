@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { auth } from "@/auth";
 import { Header } from "@/components/layout/header";
 import { Providers } from "@/components/providers";
-import { db } from "@/db";
-import { users } from "@/db/schema";
-import { userId } from "@/lib/user-id";
+import type { users } from "@/db/schema";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +28,13 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
+  const session = await auth.api.getSession({
+    headers: await headers(),
   });
+
+  const user = session?.user as typeof users.$inferSelect | null;
+
+  console.log(user);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -40,7 +43,7 @@ export default async function RootLayout({
       >
         <Providers>
           <div className="flex min-h-screen flex-col">
-            <Header user={user || null} />
+            <Header />
             <main className="flex-1 bg-background">{children}</main>
           </div>
         </Providers>

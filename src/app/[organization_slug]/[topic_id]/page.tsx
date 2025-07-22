@@ -1,8 +1,9 @@
 import { and, eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { db } from "@/db";
 import { projectsUsers, topics } from "@/db/schema";
-import { userId } from "@/lib/user-id";
 import { isValidUUID } from "@/lib/utils";
 import { TopicPageClient } from "./topic-page-client";
 
@@ -22,6 +23,16 @@ export default async function TopicPage({ params }: TopicPageProps) {
   if (!isValidUUID(topic_id)) {
     notFound();
     return;
+  }
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  const userId = session?.user.id;
+
+  if (!userId) {
+    redirect("/signin");
   }
 
   const topicData = await db.query.topics.findFirst({

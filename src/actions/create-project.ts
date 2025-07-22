@@ -2,7 +2,9 @@
 
 import { tasks } from "@trigger.dev/sdk/v3";
 import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { db } from "@/db";
 import {
   projects,
@@ -12,7 +14,6 @@ import {
   topics,
 } from "@/db/schema";
 import { nanoid } from "@/lib/nanoid";
-import { userId } from "@/lib/user-id";
 import { AIGeneratedQuerySchema } from "@/schemas/ai-generated-query";
 import type { generateInitialQueries } from "@/trigger/generate-initial-queries";
 
@@ -93,6 +94,16 @@ export async function createProject(
 
     if (existingProject) {
       slug = `${slug}-${nanoid(4)}`;
+    }
+
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      throw new Error("User not found");
     }
 
     // Create project and get the auto-generated ID

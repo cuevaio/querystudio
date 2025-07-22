@@ -2,10 +2,11 @@
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { z } from "zod";
+import { auth } from "@/auth";
 import { db } from "@/db";
 import { projectsUsers, queries } from "@/db/schema";
-import { userId } from "@/lib/user-id";
 
 // Create Query Action
 export type CreateQueryActionState = {
@@ -56,6 +57,16 @@ export async function createQueryAction(
   }
 
   try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      throw new Error("User not found");
+    }
+
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),
@@ -166,6 +177,16 @@ export async function updateQueryAction(
       return state;
     }
 
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      throw new Error("User not found");
+    }
+
     const _projectUser = await db.query.projectsUsers.findFirst({
       where: and(
         eq(projectsUsers.userId, userId),
@@ -262,6 +283,16 @@ export async function deleteQueryAction(
         error: "Query not found",
       };
       return state;
+    }
+
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    const userId = session?.user.id;
+
+    if (!userId) {
+      throw new Error("User not found");
     }
 
     const _projectUser = await db.query.projectsUsers.findFirst({

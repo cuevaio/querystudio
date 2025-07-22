@@ -1,4 +1,3 @@
-export { usersRelations } from "@/db/schema/auth";
 export { competitorsRelations } from "@/db/schema/competitors";
 export { domainsRelations } from "@/db/schema/domains";
 export { executionsRelations } from "@/db/schema/executions";

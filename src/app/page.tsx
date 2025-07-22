@@ -1,6 +1,8 @@
 import { eq } from "drizzle-orm";
 import { BarChart3, Building2, Plus, Zap } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
+import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,15 +13,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { db } from "@/db";
-import { projects, projectsUsers, users } from "@/db/schema";
-import { userId } from "@/lib/user-id";
+import { projects, projectsUsers } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, userId),
+  const session = await auth.api.getSession({
+    headers: await headers(),
   });
+
+  const user = session?.user;
 
   // If not authenticated, show landing page
   if (!user) {
@@ -116,7 +119,7 @@ export default async function HomePage() {
     })
     .from(projects)
     .innerJoin(projectsUsers, eq(projects.id, projectsUsers.projectId))
-    .where(eq(projectsUsers.userId, userId))
+    .where(eq(projectsUsers.userId, user.id))
     .orderBy(projects.createdAt);
 
   return (

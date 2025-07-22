@@ -174,7 +174,7 @@ export default function SignUp() {
                   email,
                   password,
                   name: `${firstName} ${lastName}`,
-                  image: image ? await convertImageToBase64(image) : "",
+                  image: image ? await convertImageToBase64(image) : undefined,
                   callbackURL: "/",
                   fetchOptions: {
                     onRequest: () => {
@@ -184,6 +184,7 @@ export default function SignUp() {
                       setLoading(false);
                     },
                     onError: (ctx) => {
+                      console.log(ctx);
                       toast.error(ctx.error.message);
                     },
                     onSuccess: () => {

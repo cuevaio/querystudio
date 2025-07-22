@@ -1,13 +1,14 @@
 import { and, eq } from "drizzle-orm";
 import { Plus } from "lucide-react";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { db } from "@/db";
 import { projects, projectsUsers } from "@/db/schema";
-import { userId } from "@/lib/user-id";
 import { cn } from "@/lib/utils";
 import { ProjectPageClient } from "./project-page-client";
 
@@ -43,6 +44,16 @@ export default async function OrganizationPage({
 
   if (!org) {
     notFound();
+  }
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  const userId = session?.user.id;
+
+  if (!userId) {
+    redirect("/signin");
   }
 
   // Check if user is member of organization
