@@ -32,7 +32,7 @@ export const generateInitialQueries = schemaTask({
     }
 
     // After creating initial topics and queries, generate additional queries for each topic
-    const batchHandle = await generateQueriesForTopic.batchTrigger(
+    const batchHandle = await generateQueriesForTopic.batchTriggerAndWait(
       org.topics.map((topicData) => ({
         payload: {
           organizationId,
